@@ -26,8 +26,21 @@ breaks when some other process updates.
 - **Root**, with **Magisk**. The APK has to live in `/system/priv-app` to be
   granted `MODIFY_AUDIO_ROUTING`, which is `signature|privileged`.
 - **Android 10 (API 29) or newer.** The uid-matching `AudioMix` does not exist
-  before then. Developed and measured against **Android 15 / API 35**, and
-  confirmed working on a physical device with the Magisk module flashed.
+  before then. Developed and measured against **Android 15 / API 35**.
+
+### Known working on
+
+| Device | Android | ROM | Root |
+|---|---|---|---|
+| OnePlus 12 (`CPH2583`) | 15 (API 35) | OxygenOS V15.0.0 | Magisk 30.1 |
+| Android emulator (`sdk_gphone64_x86_64`) | 15 (API 35) | AOSP | priv-app install by hand |
+
+Both are API 35, which is the level the hidden call chain was pinned against —
+so those constants are confirmed rather than assumed on the hardware. A vendor
+ROM is the real risk in this design, since OEMs do patch framework; OxygenOS is
+the one that has been tried. If you run it somewhere else, **Diagnostics** will
+tell you whether the chain is intact on your build, and a report of either
+outcome is welcome.
 
 Without root the app still installs and runs, in **Limited mode**: the system
 stream faders work, playback detection works, and the per-app faders are visibly
@@ -135,8 +148,9 @@ Measured on Android 15 / API 35 with the signed release build installed as a
 priv-app. `dumpsys audio` independently confirms the diversion: the routed app
 sits on the remote-submix device while VolumePerApp holds the speaker.
 
-The same build has since been flashed as a Magisk module on real hardware and
-works there, so the numbers above are not an emulator artefact.
+The same build has since been flashed as a Magisk module on a OnePlus 12
+(Android 15, OxygenOS V15.0.0, Magisk 30.1) and works there, so the numbers above
+are not an emulator artefact.
 
 ## Known limits
 

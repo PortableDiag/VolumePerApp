@@ -4,9 +4,16 @@ All notable changes to VolumePerApp.
 
 ## [0.2.0] — 2026-08-16
 
-**Confirmed working on real hardware.** The Magisk module was flashed on a
-physical device and per-app volume works there, not only on the emulator. That
-retires the caveat every note in this project carried until now.
+**Confirmed working on real hardware** — a OnePlus 12 (`CPH2583`), Android 15 /
+API 35, OxygenOS V15.0.0, Magisk 30.1. Per-app volume works there, not only on
+the emulator, which retires the caveat every note in this project carried.
+
+Both that phone and the emulator are **API 35**, the level the hidden call chain
+was pinned against, so `RULE_MATCH_UID` and `ROUTE_FLAG_LOOP_BACK` are confirmed
+on hardware rather than assumed to have survived a version difference. The
+device is `arm64-v8a` against the emulator's `x86_64`, which is irrelevant here
+— the app has no native code — but the vendor ROM was a real risk and is now
+one data point retired.
 
 No engine changes. Anyone already running the 0.1.0 module has the same audio
 code and does not need to re-flash; this release exists to mark the source
