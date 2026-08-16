@@ -51,8 +51,19 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
     private final Map<Integer, String> routed = new LinkedHashMap<>();
     private final Map<Integer, StreamPump> pumps = new HashMap<>();
 
-    private StateListener stateListener;
+    /**
+     * More than one thing needs to know when the engine changes state — the
+     * foreground notification and the mixer screen, at least. A single slot
+     * looked sufficient and was not: whichever registered last silently
+     * displaced the other, and the symptom was a mixer that routed audio
+     * correctly while still displaying "nothing is adjusted".
+     */
+    private final java.util.concurrent.CopyOnWriteArrayList<StateListener> stateListeners =
+            new java.util.concurrent.CopyOnWriteArrayList<>();
+
     private boolean running;
+    private boolean watching;
+    private boolean uiVisible;
     private boolean privileged;
     private String status = "stopped";
 
@@ -64,8 +75,12 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
         this.watcher = new PlaybackWatcher(this.context);
     }
 
-    public void setStateListener(StateListener l) {
-        this.stateListener = l;
+    public void addStateListener(StateListener l) {
+        if (l != null && !stateListeners.contains(l)) stateListeners.add(l);
+    }
+
+    public void removeStateListener(StateListener l) {
+        stateListeners.remove(l);
     }
 
     public boolean isPrivileged() {
@@ -94,10 +109,41 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
 
     // ---------------------------------------------------------------- lifecycle
 
+    /**
+     * Playback detection runs whenever <em>either</em> the mixer is on screen or
+     * the engine is routing — and stops when neither is true.
+     *
+     * <p>It needs no privilege and no policy; it is a callback registration. But
+     * gating it on the engine alone would be precisely backwards: the app you
+     * want to turn down is the one making noise right now, and you have not
+     * adjusted it yet, so the engine is not running. Gating it on the UI alone
+     * would blind the engine the moment the mixer is backgrounded.
+     */
+    private void reconcileWatcher() {
+        boolean want = running || uiVisible;
+        if (want && !watching) {
+            watching = true;
+            watcher.start(this);
+        } else if (!want && watching) {
+            watching = false;
+            watcher.stop();
+        }
+    }
+
+    /** Called by the mixer screen as it comes and goes. */
+    public synchronized void setUiVisible(boolean visible) {
+        uiVisible = visible;
+        reconcileWatcher();
+    }
+
+    public synchronized boolean isWatching() {
+        return watching;
+    }
+
     public synchronized void start() {
         if (running) return;
         running = true;
-        watcher.start(this);
+        reconcileWatcher();
         syncRouting();
         Log.i(TAG, "engine started; privileged=" + privileged);
         notifyState();
@@ -106,7 +152,7 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
     public synchronized void stop() {
         if (!running) return;
         running = false;
-        watcher.stop();
+        reconcileWatcher();      // keeps watching if the mixer is still on screen
         for (StreamPump p : pumps.values()) p.stop();
         pumps.clear();
         routed.clear();
@@ -249,8 +295,9 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
     }
 
     private void notifyState() {
-        StateListener l = stateListener;
-        if (l != null) l.onEngineStateChanged();
+        for (StateListener l : stateListeners) {
+            l.onEngineStateChanged();
+        }
     }
 
     // -------------------------------------------------------------- reporting

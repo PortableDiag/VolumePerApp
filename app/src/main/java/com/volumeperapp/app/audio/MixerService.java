@@ -38,6 +38,12 @@ public final class MixerService extends Service {
     private final IBinder binder = new LocalBinder();
     private VolumeStore store;
 
+    /** Held as a field so it can be removed again; a lambda per call could not. */
+    private final RoutingEngine.StateListener notificationListener = () -> {
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) nm.notify(NOTIFICATION_ID, buildNotification(engine(this)));
+    };
+
     public final class LocalBinder extends Binder {
         public MixerService service() {
             return MixerService.this;
@@ -90,10 +96,7 @@ public final class MixerService extends Service {
             return START_NOT_STICKY;
         }
 
-        eng.setStateListener(() -> {
-            NotificationManager nm = getSystemService(NotificationManager.class);
-            if (nm != null) nm.notify(NOTIFICATION_ID, buildNotification(eng));
-        });
+        eng.addStateListener(notificationListener);
 
         if (!eng.isRunning()) {
             eng.start();
@@ -113,7 +116,7 @@ public final class MixerService extends Service {
     @Override
     public void onDestroy() {
         RoutingEngine eng = engine(this);
-        eng.setStateListener(null);
+        eng.removeStateListener(notificationListener);
         eng.stop();
         super.onDestroy();
     }

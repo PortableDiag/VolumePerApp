@@ -39,6 +39,27 @@ with the signed release build installed as a privileged system app.
 - **`tools/tone/`** — test fixture emitting a 440 Hz sine at exactly 0.5 full
   scale, so the applied gain can be measured instead of guessed.
 
+### Fixed during bring-up
+
+Both found by driving the real UI on the emulator rather than by writing
+preferences behind the app's back — the second method hid them.
+
+- **The mixer screen never refreshed once routing started.** `RoutingEngine` had
+  a single state-listener slot and both `MixerService` and `MixerActivity`
+  claimed it; the service registered last and silently displaced the UI. The
+  symptom was a screen that routed audio correctly while still displaying
+  "Nothing is adjusted" and omitting the *routed* badge. Now a listener list.
+- **Playback detection was gated on the routing engine running,** so on first
+  open — before anything is adjusted, which is by design when the engine is
+  idle — the app could not show what was playing. That is backwards: the app you
+  want to turn down is the one making noise right now. The watcher now runs
+  whenever either the mixer is on screen or the engine is routing, reconciled in
+  one place.
+- **Faders dimmed whenever the engine was idle,** implying they were inert when
+  they were merely unused. Dimming now means "a policy registration was actually
+  refused", and the banner keeps the stronger claim: it says Privileged mode only
+  once a policy has been accepted.
+
 ### Known limits
 
 - Apps that set `android:allowAudioPlaybackCapture="false"` cannot be diverted;

@@ -103,16 +103,21 @@ public final class MixerActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        engine.setStateListener(this);
-        // Start the engine if anything is adjusted; harmless when nothing is.
+        engine.addStateListener(this);
+        // Playback detection first, and independently of routing: an app has to
+        // be visible in "Playing now" before there is any reason to adjust it.
+        engine.setUiVisible(true);
+        engine.watcher().refresh();
+        // Then start the engine if anything is adjusted; harmless when nothing is.
         MixerService.sync(this);
-        if (engine.isRunning()) engine.watcher().refresh();
         rebuild();
     }
 
     @Override
     protected void onPause() {
-        engine.setStateListener(null);
+        engine.removeStateListener(this);
+        // Leaves the callback registered only if routing still needs it.
+        engine.setUiVisible(false);
         super.onPause();
     }
 
@@ -137,16 +142,26 @@ public final class MixerActivity extends AppCompatActivity
 
     private void rebuild() {
         List<Row> rows = new ArrayList<>();
-        boolean live = engine.isRunning() && engine.isPrivileged();
+        // "live" means the faders are not known to be inert — not that the
+        // engine happens to be running. Before anything is adjusted the engine
+        // is idle by design, and dimming every fader then would say "this does
+        // nothing" about controls that work perfectly well. It dims only once a
+        // registration has actually been refused.
+        boolean live = !engine.isRunning() || engine.isPrivileged();
+        // Separate signal, deliberately: the banner may only claim privileged
+        // mode once a policy has actually been accepted. "Not known to be
+        // inert" (live) and "proven to work" (routingProven) are different
+        // claims, and the banner is the one place that must make the stronger.
+        boolean routingProven = engine.isRunning() && engine.isPrivileged();
 
         PlaybackWatcher watcher = engine.watcher();
-        Set<Integer> activeUids = engine.isRunning()
+        Set<Integer> activeUids = engine.isWatching()
                 ? watcher.activeUids() : java.util.Collections.emptySet();
-        Set<String> activePkgs = engine.isRunning()
+        Set<String> activePkgs = engine.isWatching()
                 ? watcher.activePackages() : java.util.Collections.emptySet();
         Set<Integer> routedUids = engine.routedUids();
 
-        rows.add(banner(live, watcher));
+        rows.add(banner(routingProven, watcher));
 
         // Every app that deserves a strip: pinned, adjusted, or making noise.
         Map<String, AppEntry> strips = new LinkedHashMap<>();
@@ -182,11 +197,14 @@ public final class MixerActivity extends AppCompatActivity
             rows.add(new Row.Section(getString(R.string.section_playing)));
             for (AppEntry e : playing) rows.add(new Row.Channel(e, live, max));
         }
-        rows.add(new Row.Section(getString(R.string.section_mixer)));
-        if (rest.isEmpty() && playing.isEmpty()) {
-            rows.add(new Row.Empty());
-        } else {
+        // A section header with nothing under it is noise; the empty-state card
+        // only earns its place when the mixer is genuinely empty.
+        if (!rest.isEmpty()) {
+            rows.add(new Row.Section(getString(R.string.section_mixer)));
             for (AppEntry e : rest) rows.add(new Row.Channel(e, live, max));
+        } else if (playing.isEmpty()) {
+            rows.add(new Row.Section(getString(R.string.section_mixer)));
+            rows.add(new Row.Empty());
         }
 
         rows.add(new Row.Section(getString(R.string.section_streams)));
