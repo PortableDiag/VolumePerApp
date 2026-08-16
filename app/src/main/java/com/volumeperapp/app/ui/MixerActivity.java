@@ -269,6 +269,19 @@ public final class MixerActivity extends AppCompatActivity
     }
 
     @Override
+    public void onReset(AppEntry app) {
+        // Both halves, because "back to 100 %" plainly means audible again:
+        // clearing the gain but leaving it muted would be a button that looks
+        // like it did nothing.
+        store.setGainPercent(app.packageName, VolumeStore.DEFAULT_PERCENT);
+        store.setMuted(app.packageName, false);
+        pushGain(app.packageName);
+        rebuild();
+        Toast.makeText(this, getString(R.string.reset_done_one, app.label),
+                Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
     public void onRemove(AppEntry app) {
         store.unpin(app.packageName);
         MixerService.sync(this);

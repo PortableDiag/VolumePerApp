@@ -34,10 +34,19 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         void onRemove(AppEntry app);
 
+        /** Fader back to 100 % and unmuted, in one tap. */
+        void onReset(AppEntry app);
+
         void onStreamChanged(int streamType, int volume);
 
         void onBannerAction();
     }
+
+    /** The value the fader snaps to on release, and what "reset" means. */
+    private static final int DETENT = VolumeStore.DEFAULT_PERCENT;
+
+    /** How close to the detent a release has to land to be pulled onto it. */
+    private static final int DETENT_PULL = 2;
 
     private final Context context;
     private final Callbacks callbacks;
@@ -47,6 +56,20 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         this.context = context;
         this.callbacks = callbacks;
         setHasStableIds(true);
+    }
+
+    /**
+     * Resolves a theme attribute against the Activity's theme.
+     *
+     * <p>The distinction matters: a direct {@code R.color.x} always yields the
+     * Ocean palette, because Terminal's colours are separate resources rather
+     * than an override of the same names. Anything that should follow the
+     * chosen scheme has to come through here.
+     */
+    private int themeColor(int attr) {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        context.getTheme().resolveAttribute(attr, tv, true);
+        return tv.data;
     }
 
     public void submit(List<Row> next) {
@@ -119,21 +142,28 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             int bg;
             switch (b.level) {
                 case OK:
-                    fg = R.color.state_ok;
-                    bg = R.color.state_ok_bg;
+                    // Status colours are shared by both schemes on purpose: green
+                    // means working and amber means broken whichever theme is on,
+                    // and in a screenshot that lost its palette.
+                    fg = ContextCompat.getColor(context, R.color.state_ok);
+                    bg = ContextCompat.getColor(context, R.color.state_ok_bg);
                     break;
                 case WARN:
-                    fg = R.color.state_warn;
-                    bg = R.color.state_warn_bg;
+                    fg = ContextCompat.getColor(context, R.color.state_warn);
+                    bg = ContextCompat.getColor(context, R.color.state_warn_bg);
                     break;
                 default:
-                    fg = R.color.text_secondary;
-                    bg = R.color.surface_variant;
+                    // The neutral banner carries no status, so it should follow
+                    // the chosen scheme. Naming R.color.surface_variant here
+                    // pinned it to Ocean and left it unchanged by the theme
+                    // toggle — these must be theme attributes, not resources.
+                    fg = themeColor(com.google.android.material.R.attr.colorOnSurfaceVariant);
+                    bg = themeColor(com.google.android.material.R.attr.colorSurfaceVariant);
                     break;
             }
-            card.setCardBackgroundColor(ContextCompat.getColor(context, bg));
-            stripe.setBackgroundColor(ContextCompat.getColor(context, fg));
-            title.setTextColor(ContextCompat.getColor(context, fg));
+            card.setCardBackgroundColor(bg);
+            stripe.setBackgroundColor(fg);
+            title.setTextColor(fg);
             title.setText(b.title);
             body.setText(b.body);
             if (b.action == null) {
@@ -141,7 +171,7 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             } else {
                 action.setVisibility(View.VISIBLE);
                 action.setText(b.action);
-                action.setTextColor(ContextCompat.getColor(context, fg));
+                action.setTextColor(fg);
                 action.setOnClickListener(v -> callbacks.onBannerAction());
             }
         }
@@ -176,6 +206,7 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         final TextView badgeRouted;
         final TextView badgeBoost;
         final TextView badgeBlocked;
+        final ImageButton reset;
         final ImageButton mute;
         final ImageButton remove;
         final Slider fader;
@@ -192,6 +223,7 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             badgeRouted = v.findViewById(R.id.badge_routed);
             badgeBoost = v.findViewById(R.id.badge_boost);
             badgeBlocked = v.findViewById(R.id.badge_blocked);
+            reset = v.findViewById(R.id.btn_reset);
             mute = v.findViewById(R.id.btn_mute);
             remove = v.findViewById(R.id.btn_remove);
             fader = v.findViewById(R.id.fader);
@@ -225,6 +257,10 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                     ? View.VISIBLE : View.GONE);
             badgeBlocked.setVisibility(app.captureBlocked ? View.VISIBLE : View.GONE);
 
+            // Only offer the reset when there is something to reset. Its absence
+            // is also how a strip at exactly 100 % reads as untouched.
+            reset.setVisibility(app.needsRouting() ? View.VISIBLE : View.GONE);
+
             // A fader that cannot act should not pretend it can.
             float alpha = c.live ? 1f : 0.55f;
             fader.setAlpha(alpha);
@@ -248,14 +284,35 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 callbacks.onGainChanged(app, pct);
             });
 
+            // A detent at 100 %. Snapping mid-drag would feel sticky, so it
+            // settles only when the finger lifts: drag freely, let go near
+            // 100 and it lands exactly on 100. This is the half of the fix
+            // that stops 98 % happening, rather than curing it afterwards.
+            fader.clearOnSliderTouchListeners();
+            fader.addOnSliderTouchListener(
+                    new com.google.android.material.slider.Slider.OnSliderTouchListener() {
+                        @Override public void onStartTrackingTouch(
+                                @NonNull com.google.android.material.slider.Slider slider) { }
+
+                        @Override public void onStopTrackingTouch(
+                                @NonNull com.google.android.material.slider.Slider slider) {
+                            int pct = Math.round(slider.getValue());
+                            if (pct != DETENT && Math.abs(pct - DETENT) <= DETENT_PULL) {
+                                binding = true;
+                                slider.setValue(DETENT);
+                                binding = false;
+                                app.gainPercent = DETENT;
+                                readout.setText(String.format(Locale.US, "%d%%", DETENT));
+                                badgeBoost.setVisibility(View.GONE);
+                                reset.setVisibility(app.muted ? View.VISIBLE : View.GONE);
+                                callbacks.onGainChanged(app, DETENT);
+                            }
+                        }
+                    });
+
+            reset.setOnClickListener(v -> callbacks.onReset(app));
             mute.setOnClickListener(v -> callbacks.onMuteToggled(app));
             remove.setOnClickListener(v -> callbacks.onRemove(app));
-        }
-
-        private int themeColor(int attr) {
-            android.util.TypedValue tv = new android.util.TypedValue();
-            context.getTheme().resolveAttribute(attr, tv, true);
-            return tv.data;
         }
     }
 

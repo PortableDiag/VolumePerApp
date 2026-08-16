@@ -31,6 +31,8 @@
     <string name="mute">Mute</string>
     <string name="unmute">Unmute</string>
     <string name="remove">Remove</string>
+    <string name="reset_to_100" formatted="false">Back to 100 %</string>
+    <string name="reset_done_one" formatted="false">%1$s back to 100 %%</string>
     <string name="playing_now">playing</string>
     <string name="routed">routed</string>
     <string name="boosted">boost clips</string>

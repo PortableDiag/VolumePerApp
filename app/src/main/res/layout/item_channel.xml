@@ -120,6 +120,21 @@
                 android:gravity="end"
                 android:textAppearance="@style/TextAppearance.VolumePerApp.Readout" />
 
+            <!--
+                Reset to 100 %. Hidden while the app is already at 100 % and
+                unmuted, so it costs nothing in the common case and its
+                presence is itself the signal that this strip is adjusted.
+            -->
+            <ImageButton
+                android:id="@+id/btn_reset"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/reset_to_100"
+                android:src="@drawable/ic_reset_100"
+                android:visibility="gone" />
+
             <ImageButton
                 android:id="@+id/btn_mute"
                 android:layout_width="40dp"

@@ -2,6 +2,37 @@
 
 All notable changes to VolumePerApp.
 
+## [0.2.1] — 2026-08-16
+
+Two things reported from real use on the OnePlus 12.
+
+### Added
+
+- **A reset button on each channel strip.** Puts the fader back to 100 % and
+  unmutes, in one tap. It is hidden while the app is already at 100 % and
+  unmuted, so it adds nothing to the common case and its presence is itself the
+  signal that a strip has been touched.
+- **A detent at 100 %.** Release the fader within 2 % of 100 and it settles
+  exactly on 100. It snaps on release rather than mid-drag, so it does not feel
+  sticky while you are moving it, and a value further out — 93 %, say — is left
+  alone. This is the half that stops 98 % happening; the button is the half that
+  fixes it after the fact.
+
+  Both were prompted by the same complaint: a 1-step fader across 0–150 makes
+  exactly 100 genuinely hard to hit, and 98 % or 103 % is not what anyone meant.
+
+### Fixed
+
+- **The neutral "Nothing is adjusted" banner ignored the theme toggle.** It
+  resolved `R.color.surface_variant` and `R.color.text_secondary` directly, and
+  those are Ocean's resources — Terminal's are separate names, not an override of
+  the same ones — so the banner stayed Ocean-blue in Terminal. It now resolves
+  `colorSurfaceVariant` / `colorOnSurfaceVariant` as **theme attributes**.
+
+  The OK and WARN banners deliberately keep fixed green and amber: those encode
+  status rather than decoration, and should read the same in either scheme and in
+  a screenshot that lost its palette. Only the neutral one was wrong.
+
 ## [0.2.0] — 2026-08-16
 
 **Confirmed working on real hardware** — a OnePlus 12 (`CPH2583`), Android 15 /
