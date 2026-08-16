@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <!--
+        allowAudioPlaybackCapture defaults to true; it is stated here because the
+        whole point of this fixture is to be capturable by a loopback mix, and a
+        default you depend on should be written down.
+    -->
+    <application
+        android:allowAudioPlaybackCapture="true"
+        android:label="Tone"
+        android:icon="@android:drawable/ic_lock_silent_mode_off">
+        <activity android:name=".ToneActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

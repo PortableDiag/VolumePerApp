@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.VolumePerApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorOnPrimary">@color/text_on_brand</item>
+        <item name="colorPrimaryContainer">@color/brand_soft</item>
+        <item name="colorOnPrimaryContainer">@color/brand</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorOnSecondary">@color/text_on_brand</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/divider</item>
+        <item name="colorOutlineVariant">@color/divider</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="colorOnBackground">@color/text_primary</item>
+        <item name="android:windowBackground">@color/bg</item>
+
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">true</item>
+
+        <item name="materialCardViewStyle">@style/Widget.VolumePerApp.Card</item>
+        <item name="sliderStyle">@style/Widget.VolumePerApp.Slider</item>
+        <item name="toolbarStyle">@style/Widget.VolumePerApp.Toolbar</item>
+        <item name="materialButtonStyle">@style/Widget.VolumePerApp.Button</item>
+        <item name="popupMenuStyle">@style/Widget.VolumePerApp.PopupMenu</item>
+    </style>
+
+    <!-- Phosphor-green scheme. Same structure, neutral surfaces, green signal. -->
+    <style name="Theme.VolumePerApp.Terminal">
+        <item name="colorPrimary">@color/brand_green</item>
+        <item name="colorOnPrimary">@color/text_on_brand</item>
+        <item name="colorPrimaryContainer">@color/brand_green_soft</item>
+        <item name="colorOnPrimaryContainer">@color/brand_green</item>
+        <item name="colorSecondary">@color/accent_green</item>
+        <item name="colorSurface">@color/surface_green</item>
+        <item name="colorOnSurface">@color/text_primary_green</item>
+        <item name="colorSurfaceVariant">@color/surface_variant_green</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary_green</item>
+        <item name="colorOutline">@color/divider_green</item>
+        <item name="colorOutlineVariant">@color/divider_green</item>
+        <item name="android:colorBackground">@color/bg_green</item>
+        <item name="colorOnBackground">@color/text_primary_green</item>
+        <item name="android:windowBackground">@color/bg_green</item>
+        <item name="android:statusBarColor">@color/bg_green</item>
+        <item name="android:navigationBarColor">@color/bg_green</item>
+    </style>
+
+    <!-- ============================== Widgets ============================== -->
+
+    <style name="Widget.VolumePerApp.Card" parent="Widget.Material3.CardView.Filled">
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="strokeColor">?attr/colorOutline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.VolumePerApp.Slider" parent="Widget.Material3.Slider">
+        <item name="thumbRadius">10dp</item>
+        <item name="trackHeight">8dp</item>
+        <item name="haloRadius">22dp</item>
+        <item name="labelBehavior">gone</item>
+    </style>
+
+    <style name="Widget.VolumePerApp.Toolbar" parent="Widget.Material3.Toolbar">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="titleTextColor">?attr/colorOnBackground</item>
+        <item name="subtitleTextColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:elevation">0dp</item>
+        <item name="titleTextAppearance">@style/TextAppearance.VolumePerApp.Title</item>
+    </style>
+
+    <style name="Widget.VolumePerApp.Button" parent="Widget.Material3.Button">
+        <item name="cornerRadius">14dp</item>
+    </style>
+
+    <style name="Widget.VolumePerApp.PopupMenu" parent="Widget.Material3.PopupMenu">
+        <item name="android:popupBackground">?attr/colorSurface</item>
+    </style>
+
+    <!-- ============================== Type ================================= -->
+    <!-- Four sizes and no more: title, section, body, readout. -->
+
+    <style name="TextAppearance.VolumePerApp.Title" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="TextAppearance.VolumePerApp.Section" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="TextAppearance.VolumePerApp.AppName" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <!-- Monospace so the number does not shuffle sideways as the fader moves. -->
+    <style name="TextAppearance.VolumePerApp.Readout" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+</resources>

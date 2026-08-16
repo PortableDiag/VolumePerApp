@@ -1,0 +1,531 @@
+=== VolumePerApp hidden-API probe ===
+android.os.Build.VERSION.SDK_INT = 35
+android.os.Build.VERSION.RELEASE = 15
+fingerprint = google/sdk_gphone64_x86_64/emu64xa:15/AE3A.240806.043/12960925:userdebug/dev-keys
+
+---------------------------------------------------------------
+CLASS    android.media.audiopolicy.AudioPolicy
+         modifiers=public  super=java.lang.Object
+  ctor    (AudioPolicyConfig, Context, Looper, AudioPolicy$AudioPolicyFocusListener, AudioPolicy$AudioPolicyStatusListener, boolean, boolean, AudioPolicy$AudioPolicyVolumeCallback, MediaProjection, AudioPolicy-IA)
+  ctor   private (AudioPolicyConfig, Context, Looper, AudioPolicy$AudioPolicyFocusListener, AudioPolicy$AudioPolicyStatusListener, boolean, boolean, AudioPolicy$AudioPolicyVolumeCallback, MediaProjection)
+  field  private ArrayList mCaptors
+  field  private ArrayList mInjectors
+  field  private AudioPolicy$AudioPolicyFocusListener mFocusListener
+  field  private AudioPolicyConfig mConfig
+  field  private Context mContext
+  field  private String mRegistrationId
+  field  private final AudioPolicy$AudioPolicyStatusListener mStatusListener
+  field  private final AudioPolicy$AudioPolicyVolumeCallback mVolCb
+  field  private final AudioPolicy$EventHandler mEventHandler
+  field  private final IAudioPolicyCallback mPolicyCb
+  field  private final MediaProjection mProjection
+  field  private final Object mLock
+  field  private final boolean mIsFocusPolicy
+  field  private final boolean mIsTestFocusPolicy
+  field  private int mStatus
+  field  private static IAudioService sService
+  field  private static final String TAG = AudioPolicy
+  field  private static final boolean DEBUG = false
+  field  private static final int MSG_FOCUS_ABANDON = 5
+  field  private static final int MSG_FOCUS_GRANT = 1
+  field  private static final int MSG_FOCUS_LOSS = 2
+  field  private static final int MSG_FOCUS_REQUEST = 4
+  field  private static final int MSG_MIX_STATE_UPDATE = 3
+  field  private static final int MSG_POLICY_STATUS_CHANGE = 0
+  field  private static final int MSG_VOL_ADJUST = 6
+  field  public static final int FOCUS_POLICY_DUCKING_DEFAULT = 0
+  field  public static final int FOCUS_POLICY_DUCKING_IN_APP = 0
+  field  public static final int FOCUS_POLICY_DUCKING_IN_POLICY = 1
+  field  public static final int POLICY_STATUS_REGISTERED = 2
+  field  public static final int POLICY_STATUS_UNREGISTERED = 1
+  method private boolean isAudioPolicyRegisteredLocked()
+  method private boolean isCallRedirectionPolicy()
+  method private boolean isLoopbackRenderPolicy()
+  method private boolean policyReadyToUse()
+  method private int checkCallingOrSelfPermission(String)
+  method private static AttributionSource getAttributionSource(Context)
+  method private static IAudioService getService()
+  method private static String addressForTag(AudioMix)
+  method private void checkMixReadyToUse(AudioMix, boolean)
+  method private void onPolicyStatusChange()
+  method private void sendMsg(int)
+  method private void sendMsg(int, Object, int)
+  method public AttributionSource getAttributionSource()
+  method public AudioPolicyConfig getConfig()
+  method public AudioRecord createAudioRecordSink(AudioMix)
+  method public AudioTrack createAudioTrackSource(AudioMix)
+  method public FadeManagerConfiguration getFadeManagerConfigurationForFocusLoss()
+  method public IAudioPolicyCallback cb()
+  method public List getFocusStack()
+  method public List getMixes()
+  method public MediaProjection getMediaProjection()
+  method public String getRegistration()
+  method public String toLogFriendlyString()
+  method public boolean hasFocusListener()
+  method public boolean isFocusPolicy()
+  method public boolean isTestFocusPolicy()
+  method public boolean isVolumeController()
+  method public boolean removeUidDeviceAffinity(int)
+  method public boolean removeUserIdDeviceAffinity(int)
+  method public boolean sendFocusLoss(AudioFocusInfo)
+  method public boolean setUidDeviceAffinity(int, List)
+  method public boolean setUserIdDeviceAffinity(int, List)
+  method public int attachMixes(List)
+  method public int clearFadeManagerConfigurationForFocusLoss()
+  method public int detachMixes(List)
+  method public int getFocusDuckingBehavior()
+  method public int getStatus()
+  method public int setFadeManagerConfigurationForFocusLoss(FadeManagerConfiguration)
+  method public int setFocusDuckingBehavior(int)
+  method public int updateMixingRules(List)
+  method public void invalidateCaptorsAndInjectors()
+  method public void reset()
+  method public void setRegistration(String)
+  method static AudioMix lambda$updateMixingRules$0(Pair)
+  method static AudioMix[] lambda$updateMixingRules$1(int)
+  method static AudioMixingRule lambda$updateMixingRules$2(Pair)
+  method static AudioMixingRule[] lambda$updateMixingRules$3(int)
+  method static boolean lambda$isLoopbackRenderPolicy$4(AudioMix)
+  method static volatile AttributionSource -$$Nest$smgetAttributionSource(Context)
+  method static volatile AudioPolicy$AudioPolicyFocusListener -$$Nest$fgetmFocusListener(AudioPolicy)
+  method static volatile AudioPolicy$AudioPolicyStatusListener -$$Nest$fgetmStatusListener(AudioPolicy)
+  method static volatile AudioPolicy$AudioPolicyVolumeCallback -$$Nest$fgetmVolCb(AudioPolicy)
+  method static volatile AudioPolicyConfig -$$Nest$fgetmConfig(AudioPolicy)
+  method static volatile void -$$Nest$monPolicyStatusChange(AudioPolicy)
+  method static volatile void -$$Nest$msendMsg(AudioPolicy, int, Object, int)
+---------------------------------------------------------------
+CLASS    android.media.audiopolicy.AudioPolicy$Builder
+         modifiers=public static  super=java.lang.Object
+  ctor   public (Context)
+  field  private ArrayList mMixes
+  field  private AudioPolicy$AudioPolicyFocusListener mFocusListener
+  field  private AudioPolicy$AudioPolicyStatusListener mStatusListener
+  field  private AudioPolicy$AudioPolicyVolumeCallback mVolCb
+  field  private Context mContext
+  field  private Looper mLooper
+  field  private MediaProjection mProjection
+  field  private boolean mIsFocusPolicy
+  field  private boolean mIsTestFocusPolicy
+  method public AudioPolicy build()
+  method public AudioPolicy$Builder addMix(AudioMix)
+  method public AudioPolicy$Builder setAudioPolicyVolumeCallback(AudioPolicy$AudioPolicyVolumeCallback)
+  method public AudioPolicy$Builder setIsAudioFocusPolicy(boolean)
+  method public AudioPolicy$Builder setIsTestFocusPolicy(boolean)
+  method public AudioPolicy$Builder setLooper(Looper)
+  method public AudioPolicy$Builder setMediaProjection(MediaProjection)
+  method public void setAudioPolicyFocusListener(AudioPolicy$AudioPolicyFocusListener)
+  method public void setAudioPolicyStatusListener(AudioPolicy$AudioPolicyStatusListener)
+---------------------------------------------------------------
+CLASS    android.media.audiopolicy.AudioPolicy$AudioPolicyStatusListener
+         modifiers=public abstract static  super=java.lang.Object
+  ctor   public ()
+  method public void onMixStateUpdate(AudioMix)
+  method public void onStatusChange()
+---------------------------------------------------------------
+CLASS    android.media.audiopolicy.AudioMix
+         modifiers=public  super=java.lang.Object
+  ctor    (AudioMixingRule, AudioFormat, int, int, int, String, IBinder, int, AudioMix-IA)
+  ctor   private (AudioMixingRule, AudioFormat, int, int, int, String, IBinder, int)
+  field   String mDeviceAddress
+  field   int mCallbackFlags
+  field   int mMixState
+  field  final int mDeviceSystemType
+  field  private AudioFormat mFormat
+  field  private AudioMixingRule mRule
+  field  private final IBinder mToken
+  field  private int mMixType
+  field  private int mRouteFlags
+  field  private int mVirtualDeviceId
+  field  private static final int CALLBACK_FLAGS_ALL = 1
+  field  private static final int PRIVILEDGED_CAPTURE_MAX_BYTES_PER_SAMPLE = 2
+  field  private static final int PRIVILEDGED_CAPTURE_MAX_CHANNEL_NUMBER = 1
+  field  private static final int PRIVILEDGED_CAPTURE_MAX_SAMPLE_RATE = 16000
+  field  private static final int ROUTE_FLAG_SUPPORTED = 3
+  field  public static final Parcelable$Creator CREATOR
+  field  public static final int CALLBACK_FLAG_NOTIFY_ACTIVITY = 1
+  field  public static final int MIX_STATE_DISABLED = -1
+  field  public static final int MIX_STATE_IDLE = 0
+  field  public static final int MIX_STATE_MIXING = 1
+  field  public static final int MIX_TYPE_INVALID = -1
+  field  public static final int MIX_TYPE_PLAYERS = 0
+  field  public static final int MIX_TYPE_RECORDERS = 1
+  field  public static final int ROUTE_FLAG_LOOP_BACK = 2
+  field  public static final int ROUTE_FLAG_LOOP_BACK_RENDER = 3
+  field  public static final int ROUTE_FLAG_RENDER = 1
+  method  void setRegistration(String)
+  method public AudioFormat getFormat()
+  method public AudioMixingRule getRule()
+  method public String getRegistration()
+  method public boolean containsMatchAttributeRuleForUsage(int)
+  method public boolean equals(Object)
+  method public boolean isAffectingUsage(int)
+  method public boolean isForCallRedirection()
+  method public boolean isRoutedToDevice(int, String)
+  method public boolean matchesVirtualDeviceId(int)
+  method public int describeContents()
+  method public int getMixState()
+  method public int getMixType()
+  method public int getRouteFlags()
+  method public int hashCode()
+  method public static String canBeUsedForPrivilegedMediaCapture(AudioFormat)
+  method public void setAudioMixingRule(AudioMixingRule)
+  method public void setVirtualDeviceId(int)
+  method public void writeToParcel(Parcel, int)
+---------------------------------------------------------------
+CLASS    android.media.audiopolicy.AudioMix$Builder
+         modifiers=public static  super=java.lang.Object
+  ctor    ()
+  ctor   public (AudioMixingRule)
+  field  private AudioFormat mFormat
+  field  private AudioMixingRule mRule
+  field  private IBinder mToken
+  field  private String mDeviceAddress
+  field  private int mCallbackFlags
+  field  private int mDeviceSystemType
+  field  private int mRouteFlags
+  field  private int mVirtualDeviceId
+  method  AudioMix$Builder setCallbackFlags(int)
+  method  AudioMix$Builder setMixingRule(AudioMixingRule)
+  method  AudioMix$Builder setToken(IBinder)
+  method  AudioMix$Builder setVirtualDeviceId(int)
+  method private int getLoopbackDeviceSystemTypeForAudioMixingRule(AudioMixingRule)
+  method public AudioMix build()
+  method public AudioMix$Builder setDevice(AudioDeviceInfo)
+  method public AudioMix$Builder setDevice(int, String)
+  method public AudioMix$Builder setFormat(AudioFormat)
+  method public AudioMix$Builder setRouteFlags(int)
+---------------------------------------------------------------
+CLASS    android.media.audiopolicy.AudioMixingRule
+         modifiers=public  super=java.lang.Object
+  ctor    (int, Collection, boolean, boolean, AudioMixingRule-IA)
+  ctor   private (int, Collection, boolean, boolean)
+  field  private boolean mAllowPrivilegedPlaybackCapture
+  field  private boolean mVoiceCommunicationCaptureAllowed
+  field  private final ArrayList mCriteria
+  field  private final int mTargetMixType
+  field  private static final int RULE_EXCLUSION_MASK = 32768
+  field  public static final Parcelable$Creator CREATOR
+  field  public static final int MIX_ROLE_INJECTOR = 1
+  field  public static final int MIX_ROLE_PLAYERS = 0
+  field  public static final int RULE_EXCLUDE_ATTRIBUTE_CAPTURE_PRESET = 32770
+  field  public static final int RULE_EXCLUDE_ATTRIBUTE_USAGE = 32769
+  field  public static final int RULE_EXCLUDE_AUDIO_SESSION_ID = 32784
+  field  public static final int RULE_EXCLUDE_UID = 32772
+  field  public static final int RULE_EXCLUDE_USERID = 32776
+  field  public static final int RULE_MATCH_ATTRIBUTE_CAPTURE_PRESET = 2
+  field  public static final int RULE_MATCH_ATTRIBUTE_USAGE = 1
+  field  public static final int RULE_MATCH_AUDIO_SESSION_ID = 16
+  field  public static final int RULE_MATCH_UID = 4
+  field  public static final int RULE_MATCH_USERID = 8
+  method  boolean containsMatchAttributeRuleForUsage(int)
+  method  boolean isAffectingUsage(int)
+  method  int getTargetMixType()
+  method private static boolean isAudioAttributeRule(int)
+  method private static boolean isPlayerRule(int)
+  method private static boolean isRecorderRule(int)
+  method private static boolean isValidAttributesSystemApiRule(int)
+  method private static boolean isValidRule(int)
+  method private static boolean isValidSystemApiRule(int)
+  method public ArrayList getCriteria()
+  method public boolean allowPrivilegedMediaPlaybackCapture()
+  method public boolean equals(Object)
+  method public boolean isForCallRedirection()
+  method public boolean voiceCommunicationCaptureAllowed()
+  method public int describeContents()
+  method public int getTargetMixRole()
+  method public int hashCode()
+  method public void setVoiceCommunicationCaptureAllowed(boolean)
+  method public void writeToParcel(Parcel, int)
+  method static volatile boolean -$$Nest$smisAudioAttributeRule(int)
+  method static volatile boolean -$$Nest$smisPlayerRule(int)
+  method static volatile boolean -$$Nest$smisRecorderRule(int)
+  method static volatile boolean -$$Nest$smisValidAttributesSystemApiRule(int)
+  method static volatile boolean -$$Nest$smisValidRule(int)
+  method static volatile boolean -$$Nest$smisValidSystemApiRule(int)
+---------------------------------------------------------------
+CLASS    android.media.audiopolicy.AudioMixingRule$Builder
+         modifiers=public static  super=java.lang.Object
+  ctor   public ()
+  field  private boolean mAllowPrivilegedMediaPlaybackCapture
+  field  private boolean mVoiceCommunicationCaptureAllowed
+  field  private final Set mCriteria
+  field  private int mTargetMixType
+  method private AudioMixingRule$Builder addRuleInternal(AudioMixingRule$AudioMixMatchCriterion)
+  method private AudioMixingRule$Builder checkAddRuleObjInternal(int, Object)
+  method public AudioMixingRule build()
+  method public AudioMixingRule$Builder addMixRule(int, Object)
+  method public AudioMixingRule$Builder addRule(AudioAttributes, int)
+  method public AudioMixingRule$Builder allowPrivilegedPlaybackCapture(boolean)
+  method public AudioMixingRule$Builder excludeMixRule(int, Object)
+  method public AudioMixingRule$Builder excludeRule(AudioAttributes, int)
+  method public AudioMixingRule$Builder setTargetMixRole(int)
+  method public AudioMixingRule$Builder voiceCommunicationCaptureAllowed(boolean)
+  method public static boolean $r8$lambda$DXJIoM-ZdeHxRjLqQf679sU5vC8(int)
+  method public static boolean $r8$lambda$mJ1IGv61p3ro9ldbVfUy40LBddw(int)
+  method static boolean lambda$addRuleInternal$0(int, AudioMixingRule$AudioMixMatchCriterion)
+  method static volatile AudioMixingRule$Builder -$$Nest$maddRuleInternal(AudioMixingRule$Builder, AudioMixingRule$AudioMixMatchCriterion)
+---------------------------------------------------------------
+CLASS    android.media.AudioAttributes
+         modifiers=public final  super=java.lang.Object
+  ctor    (AudioAttributes-IA)
+  ctor    (Parcel, AudioAttributes-IA)
+  ctor   private ()
+  ctor   private (Parcel)
+  field  private static final int FLAG_ALL = 129023
+  field  private static final int FLAG_ALL_API_SET = 465
+  field  private static final int FLAG_ALL_PUBLIC = 273
+  field  private static final int SYSTEM_USAGE_OFFSET = 1000
+  field  private static final int USAGE_INVALID = -1
+  field  public static final int FLAG_AUDIBILITY_ENFORCED = 1
+  field  public static final int FLAG_BEACON = 8
+  field  public static final int FLAG_BYPASS_INTERRUPTION_POLICY = 64
+  field  public static final int FLAG_BYPASS_MUTE = 128
+  field  public static final int FLAG_CALL_REDIRECTION = 65536
+  field  public static final int FLAG_CAPTURE_PRIVATE = 8192
+  field  public static final int FLAG_CONTENT_SPATIALIZED = 16384
+  field  public static final int FLAG_DEEP_BUFFER = 512
+  field  public static final int FLAG_HW_AV_SYNC = 16
+  field  public static final int FLAG_HW_HOTWORD = 32
+  field  public static final int FLAG_LOW_LATENCY = 256
+  field  public static final int FLAG_MUTE_HAPTIC = 2048
+  field  public static final int FLAG_NEVER_SPATIALIZE = 32768
+  field  public static final int FLAG_NO_MEDIA_PROJECTION = 1024
+  field  public static final int FLAG_NO_SYSTEM_CAPTURE = 4096
+  field  public static final int FLAG_SCO = 4
+  field  public static final int FLAG_SECURE = 2
+  field  public static final int USAGE_ALARM = 4
+  field  public static final int USAGE_ANNOUNCEMENT = 1003
+  field  public static final int USAGE_ASSISTANCE_ACCESSIBILITY = 11
+  field  public static final int USAGE_ASSISTANCE_NAVIGATION_GUIDANCE = 12
+  field  public static final int USAGE_ASSISTANCE_SONIFICATION = 13
+  field  public static final int USAGE_ASSISTANT = 16
+  field  public static final int USAGE_CALL_ASSISTANT = 17
+  field  public static final int USAGE_EMERGENCY = 1000
+  field  public static final int USAGE_GAME = 14
+  field  public static final int USAGE_MEDIA = 1
+  field  public static final int USAGE_NOTIFICATION = 5
+  field  public static final int USAGE_NOTIFICATION_COMMUNICATION_DELAYED = 9
+  field  public static final int USAGE_NOTIFICATION_COMMUNICATION_INSTANT = 8
+  field  public static final int USAGE_NOTIFICATION_COMMUNICATION_REQUEST = 7
+  field  public static final int USAGE_NOTIFICATION_EVENT = 10
+  field  public static final int USAGE_NOTIFICATION_RINGTONE = 6
+  field  public static final int USAGE_SAFETY = 1001
+  field  public static final int USAGE_UNKNOWN = 0
+  field  public static final int USAGE_VEHICLE_STATUS = 1002
+  field  public static final int USAGE_VIRTUAL_SOURCE = 15
+  field  public static final int USAGE_VOICE_COMMUNICATION = 2
+  field  public static final int USAGE_VOICE_COMMUNICATION_SIGNALLING = 3
+  method public int getUsage()
+---------------------------------------------------------------
+CLASS    android.media.AudioAttributes$Builder
+         modifiers=public static  super=java.lang.Object
+  ctor   public ()
+  ctor   public (AudioAttributes)
+  method public AudioAttributes build()
+  method public AudioAttributes$Builder setCapturePreset(int)
+  method public AudioAttributes$Builder setFlags(int)
+  method public AudioAttributes$Builder setInternalCapturePreset(int)
+  method public AudioAttributes$Builder setUsage(int)
+---------------------------------------------------------------
+CLASS    android.media.AudioFormat
+         modifiers=public final  super=java.lang.Object
+  ctor    (Parcel, AudioFormat-IA)
+  ctor    (int, int, int, int, int, AudioFormat-IA)
+  ctor   private (Parcel)
+  ctor   private (int, int, int, int)
+  ctor   private (int, int, int, int, int)
+  ctor   public ()
+  field  public static final int AUDIO_FORMAT_HAS_PROPERTY_CHANNEL_INDEX_MASK = 8
+  field  public static final int CHANNEL_INVALID = 0
+  field  public static final int CHANNEL_IN_2POINT0POINT2 = 6291468
+  field  public static final int CHANNEL_IN_2POINT1POINT2 = 7340044
+  field  public static final int CHANNEL_IN_3POINT0POINT2 = 6553612
+  field  public static final int CHANNEL_IN_3POINT1POINT2 = 7602188
+  field  public static final int CHANNEL_IN_5POINT1 = 1507340
+  field  public static final int CHANNEL_IN_BACK = 32
+  field  public static final int CHANNEL_IN_BACK_LEFT = 65536
+  field  public static final int CHANNEL_IN_BACK_PROCESSED = 512
+  field  public static final int CHANNEL_IN_BACK_RIGHT = 131072
+  field  public static final int CHANNEL_IN_CENTER = 262144
+  field  public static final int CHANNEL_IN_DEFAULT = 1
+  field  public static final int CHANNEL_IN_FRONT = 16
+  field  public static final int CHANNEL_IN_FRONT_BACK = 48
+  field  public static final int CHANNEL_IN_FRONT_PROCESSED = 256
+  field  public static final int CHANNEL_IN_LEFT = 4
+  field  public static final int CHANNEL_IN_LEFT_PROCESSED = 64
+  field  public static final int CHANNEL_IN_LOW_FREQUENCY = 1048576
+  field  public static final int CHANNEL_IN_MONO = 16
+  field  public static final int CHANNEL_IN_PRESSURE = 1024
+  field  public static final int CHANNEL_IN_RIGHT = 8
+  field  public static final int CHANNEL_IN_RIGHT_PROCESSED = 128
+  field  public static final int CHANNEL_IN_STEREO = 12
+  field  public static final int CHANNEL_IN_TOP_LEFT = 2097152
+  field  public static final int CHANNEL_IN_TOP_RIGHT = 4194304
+  field  public static final int CHANNEL_IN_VOICE_DNLINK = 32768
+  field  public static final int CHANNEL_IN_VOICE_UPLINK = 16384
+  field  public static final int CHANNEL_IN_X_AXIS = 2048
+  field  public static final int CHANNEL_IN_Y_AXIS = 4096
+  field  public static final int CHANNEL_IN_Z_AXIS = 8192
+  field  public static final int CHANNEL_OUT_13POINT_360RA = 30136348
+  field  public static final int CHANNEL_OUT_22POINT2 = 67108860
+  field  public static final int CHANNEL_OUT_5POINT1 = 252
+  field  public static final int CHANNEL_OUT_5POINT1POINT2 = 3145980
+  field  public static final int CHANNEL_OUT_5POINT1POINT4 = 737532
+  field  public static final int CHANNEL_OUT_5POINT1_SIDE = 6204
+  field  public static final int CHANNEL_OUT_6POINT1 = 1276
+  field  public static final int CHANNEL_OUT_7POINT1 = 1020
+  field  public static final int CHANNEL_OUT_7POINT1POINT2 = 3152124
+  field  public static final int CHANNEL_OUT_7POINT1POINT4 = 743676
+  field  public static final int CHANNEL_OUT_7POINT1_SURROUND = 6396
+  field  public static final int CHANNEL_OUT_9POINT1POINT4 = 202070268
+  field  public static final int CHANNEL_OUT_9POINT1POINT6 = 205215996
+  field  public static final int CHANNEL_OUT_BACK_CENTER = 1024
+  field  public static final int CHANNEL_OUT_BACK_LEFT = 64
+  field  public static final int CHANNEL_OUT_BACK_RIGHT = 128
+  field  public static final int CHANNEL_OUT_BOTTOM_FRONT_CENTER = 8388608
+  field  public static final int CHANNEL_OUT_BOTTOM_FRONT_LEFT = 4194304
+  field  public static final int CHANNEL_OUT_BOTTOM_FRONT_RIGHT = 16777216
+  field  public static final int CHANNEL_OUT_DEFAULT = 1
+  field  public static final int CHANNEL_OUT_FRONT_CENTER = 16
+  field  public static final int CHANNEL_OUT_FRONT_LEFT = 4
+  field  public static final int CHANNEL_OUT_FRONT_LEFT_OF_CENTER = 256
+  field  public static final int CHANNEL_OUT_FRONT_RIGHT = 8
+  field  public static final int CHANNEL_OUT_FRONT_RIGHT_OF_CENTER = 512
+  field  public static final int CHANNEL_OUT_FRONT_WIDE_LEFT = 67108864
+  field  public static final int CHANNEL_OUT_FRONT_WIDE_RIGHT = 134217728
+  field  public static final int CHANNEL_OUT_HAPTIC_A = 536870912
+  field  public static final int CHANNEL_OUT_HAPTIC_B = 268435456
+  field  public static final int CHANNEL_OUT_LOW_FREQUENCY = 32
+  field  public static final int CHANNEL_OUT_LOW_FREQUENCY_2 = 33554432
+  field  public static final int CHANNEL_OUT_MONO = 4
+  field  public static final int CHANNEL_OUT_QUAD = 204
+  field  public static final int CHANNEL_OUT_QUAD_SIDE = 6156
+  field  public static final int CHANNEL_OUT_SIDE_LEFT = 2048
+  field  public static final int CHANNEL_OUT_SIDE_RIGHT = 4096
+  field  public static final int CHANNEL_OUT_STEREO = 12
+  field  public static final int CHANNEL_OUT_SURROUND = 1052
+  field  public static final int CHANNEL_OUT_TOP_BACK_CENTER = 262144
+  field  public static final int CHANNEL_OUT_TOP_BACK_LEFT = 131072
+  field  public static final int CHANNEL_OUT_TOP_BACK_RIGHT = 524288
+  field  public static final int CHANNEL_OUT_TOP_CENTER = 8192
+  field  public static final int CHANNEL_OUT_TOP_FRONT_CENTER = 32768
+  field  public static final int CHANNEL_OUT_TOP_FRONT_LEFT = 16384
+  field  public static final int CHANNEL_OUT_TOP_FRONT_RIGHT = 65536
+  field  public static final int CHANNEL_OUT_TOP_SIDE_LEFT = 1048576
+  field  public static final int CHANNEL_OUT_TOP_SIDE_RIGHT = 2097152
+  field  public static final int ENCODING_PCM_16BIT = 2
+  field  public static final int ENCODING_PCM_24BIT_PACKED = 21
+  field  public static final int ENCODING_PCM_32BIT = 22
+  field  public static final int ENCODING_PCM_8BIT = 3
+  field  public static final int ENCODING_PCM_FLOAT = 4
+  method public int getChannelCount()
+  method public int getChannelIndexMask()
+  method public int getChannelMask()
+  method public int getSampleRate()
+---------------------------------------------------------------
+CLASS    android.media.AudioFormat$Builder
+         modifiers=public static  super=java.lang.Object
+  ctor   public ()
+  ctor   public (AudioFormat)
+  method public AudioFormat build()
+  method public AudioFormat$Builder setChannelMask(int)
+  method public AudioFormat$Builder setEncoding(int)
+  method public AudioFormat$Builder setSampleRate(int)
+---------------------------------------------------------------
+CLASS    android.media.AudioManager
+         modifiers=public  super=java.lang.Object
+  ctor   public ()
+  ctor   public (Context)
+  field  public static final int ERROR = -1
+  field  public static final int ERROR_BAD_VALUE = -2
+  field  public static final int ERROR_DEAD_OBJECT = -6
+  field  public static final int ERROR_INVALID_OPERATION = -3
+  field  public static final int ERROR_NO_INIT = -5
+  field  public static final int ERROR_PERMISSION_DENIED = -4
+  field  public static final int SCO_AUDIO_STATE_ERROR = -1
+  field  public static final int SUCCESS = 0
+  method public int registerAudioPolicy(AudioPolicy)
+  method public void unregisterAudioPolicy(AudioPolicy)
+  method public void unregisterAudioPolicyAsync(AudioPolicy)
+  method static int registerAudioPolicyStatic(AudioPolicy)
+  method static void unregisterAudioPolicyAsyncStatic(AudioPolicy)
+---------------------------------------------------------------
+CLASS    android.media.AudioPlaybackConfiguration
+         modifiers=public final  super=java.lang.Object
+  ctor    (Parcel, AudioPlaybackConfiguration-IA)
+  ctor   private (Parcel)
+  ctor   private (int)
+  ctor   public (PlayerBase$PlayerIdCard, int, int, int)
+  field  public static final int PLAYER_STATE_IDLE = 1
+  field  public static final int PLAYER_STATE_PAUSED = 3
+  field  public static final int PLAYER_STATE_RELEASED = 0
+  field  public static final int PLAYER_STATE_STARTED = 2
+  field  public static final int PLAYER_STATE_STOPPED = 4
+  field  public static final int PLAYER_STATE_UNKNOWN = -1
+  method public AudioAttributes getAudioAttributes()
+  method public AudioDeviceInfo getAudioDeviceInfo()
+  method public int getClientPid()
+  method public int getClientUid()
+  method public int getPlayerState()
+  method public int getSessionId()
+---------------------------------------------------------------
+CLASS    android.media.AudioSystem
+         modifiers=public  super=java.lang.Object
+  ctor   private ()
+  field  private static final int DYNAMIC_POLICY_EVENT_MIX_STATE_UPDATE = 0
+  field  public static final Set DEVICE_ALL_HDMI_SYSTEM_AUDIO_AND_SPEAKER_SET
+  field  public static final Set DEVICE_OUT_ALL_HDMI_SYSTEM_AUDIO_SET
+  field  public static final String DEVICE_IN_REMOTE_SUBMIX_NAME = remote_submix
+  field  public static final String DEVICE_OUT_REMOTE_SUBMIX_NAME = remote_submix
+  field  public static final String LEGACY_REMOTE_SUBMIX_ADDRESS = 0
+  field  public static final int AUDIO_FORMAT_AAC = 67108864
+  field  public static final int AUDIO_FORMAT_APTX = 536870912
+  field  public static final int AUDIO_FORMAT_APTX_HD = 553648128
+  field  public static final int AUDIO_FORMAT_DEFAULT = 0
+  field  public static final int AUDIO_FORMAT_INVALID = -1
+  field  public static final int AUDIO_FORMAT_LC3 = 721420288
+  field  public static final int AUDIO_FORMAT_LDAC = 587202560
+  field  public static final int AUDIO_FORMAT_OPUS = 134217728
+  field  public static final int AUDIO_FORMAT_SBC = 520093696
+  field  public static final int AUDIO_HW_SYNC_INVALID = 0
+  field  public static final int AUDIO_SESSION_ALLOCATE = 0
+  field  public static final int AUDIO_STATUS_ERROR = 1
+  field  public static final int AUDIO_STATUS_OK = 0
+  field  public static final int AUDIO_STATUS_SERVER_DIED = 100
+  field  public static final int FORCE_HDMI_SYSTEM_AUDIO_ENFORCED = 12
+  field  public static final int SUCCESS = 0
+  field  public static final int SYNC_EVENT_SHARE_AUDIO_HISTORY = 100
+  method private static native int setStreamVolumeIndex(int, int, int)
+  method public static int setStreamVolumeIndexAS(int, int, int)
+---------------------------------------------------------------
+CLASS    android.media.audiopolicy.AudioMixingRule$AudioMixMatchCriterion
+         modifiers=public static final  super=java.lang.Object
+  ctor    (Parcel, AudioMixingRule$AudioMixMatchCriterion-IA)
+  ctor   private (Parcel)
+  ctor   public (AudioAttributes, int)
+  ctor   public (Integer, int)
+  field  final AudioAttributes mAttr
+  field  final int mIntProp
+  field  final int mRule
+  field  public static final Parcelable$Creator CREATOR
+  method public AudioAttributes getAudioAttributes()
+  method public boolean equals(Object)
+  method public int describeContents()
+  method public int getIntProp()
+  method public int getRule()
+  method public int hashCode()
+  method public void writeToParcel(Parcel, int)
+
+=== RECIPE CHECK — the exact call chain the engine needs ===
+  AudioMixingRule.Builder()                                  OK    ok
+  AudioMixingRule.RULE_MATCH_UID                             OK    4
+  AudioMixingRule.Builder.addMixRule(int, Object)            OK    public android.media.audiopolicy.AudioMixingRule$Builder android.media.audiopolicy.AudioMixingRule$Builder.addMixRule(int,java.lang.Object) throws java.lang.IllegalArgumentException
+  AudioMix.Builder.setRouteFlags(int)                        OK    public android.media.audiopolicy.AudioMix$Builder android.media.audiopolicy.AudioMix$Builder.setRouteFlags(int) throws java.lang.IllegalArgumentException
+  AudioMix.ROUTE_FLAG_LOOP_BACK|ROUTE_FLAG_RENDER            OK    LOOP_BACK=2 RENDER=1
+  AudioPolicy.Builder(Context)                               OK    public android.media.audiopolicy.AudioPolicy$Builder(android.content.Context)
+  AudioPolicy.Builder.addMix(AudioMix)                       OK    public android.media.audiopolicy.AudioPolicy$Builder android.media.audiopolicy.AudioPolicy$Builder.addMix(android.media.audiopolicy.AudioMix) throws java.lang.IllegalArgumentException
+  AudioPolicy.createAudioRecordSink(AudioMix)                OK    public android.media.AudioRecord android.media.audiopolicy.AudioPolicy.createAudioRecordSink(android.media.audiopolicy.AudioMix) throws java.lang.IllegalArgumentException
+  AudioPolicy.createAudioTrackSource(AudioMix)               OK    public android.media.AudioTrack android.media.audiopolicy.AudioPolicy.createAudioTrackSource(android.media.audiopolicy.AudioMix) throws java.lang.IllegalArgumentException
+  AudioManager.registerAudioPolicy(AudioPolicy)              OK    public int android.media.AudioManager.registerAudioPolicy(android.media.audiopolicy.AudioPolicy)
+  AudioAttributes.Builder.setInternalCapturePreset(int)      OK    public android.media.AudioAttributes$Builder android.media.AudioAttributes$Builder.setInternalCapturePreset(int)
+  AudioMixingRule.Builder.voiceCommunicationCaptureAllowed   OK    public android.media.audiopolicy.AudioMixingRule$Builder android.media.audiopolicy.AudioMixingRule$Builder.voiceCommunicationCaptureAllowed(boolean)

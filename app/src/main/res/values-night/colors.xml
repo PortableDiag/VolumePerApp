@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ============================ Ocean (dark) ============================= -->
+    <color name="brand">#60A5FA</color>
+    <color name="brand_dark">#070C1A</color>
+    <color name="brand_soft">#16223D</color>
+    <color name="accent">#22D3EE</color>
+    <color name="text_on_brand">#08111F</color>
+
+    <color name="bg">#080D1A</color>
+    <color name="surface">#121A2C</color>
+    <color name="surface_variant">#1A2338</color>
+    <color name="surface_elevated">#172034</color>
+
+    <color name="text_primary">#E9EEF7</color>
+    <color name="text_secondary">#94A6C0</color>
+    <color name="divider">#25314C</color>
+
+    <!-- =========================== Terminal (dark) ========================== -->
+    <!-- Brighter phosphor on true black — the look the scheme exists for. -->
+    <color name="brand_green">#22DD6A</color>
+    <color name="brand_green_dark">#02120A</color>
+    <color name="brand_green_soft">#0A2415</color>
+    <color name="accent_green">#3DF08A</color>
+
+    <color name="bg_green">#000000</color>
+    <color name="surface_green">#0B0E0B</color>
+    <color name="surface_variant_green">#161A16</color>
+    <color name="divider_green">#20261F</color>
+    <color name="text_primary_green">#D8F5E0</color>
+    <color name="text_secondary_green">#77906F</color>
+
+    <!-- ============================== Semantics ============================= -->
+    <color name="state_ok">#4ADE80</color>
+    <color name="state_ok_bg">#0C2A18</color>
+    <color name="state_warn">#FBBF24</color>
+    <color name="state_warn_bg">#2E2208</color>
+    <color name="state_bad">#F87171</color>
+    <color name="state_bad_bg">#2E1212</color>
+
+    <color name="playing">#4ADE80</color>
+    <color name="muted">#5A6B85</color>
+    <color name="boost">#FB923C</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon variant: same mark, single colour, tinted by the launcher. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M36,32 L36,76" android:strokeColor="#61000000" android:strokeWidth="5" android:strokeLineCap="round" />
+    <path android:pathData="M54,32 L54,76" android:strokeColor="#61000000" android:strokeWidth="5" android:strokeLineCap="round" />
+    <path android:pathData="M72,32 L72,76" android:strokeColor="#61000000" android:strokeWidth="5" android:strokeLineCap="round" />
+    <path android:pathData="M36,76 L36,54" android:strokeColor="#FF000000" android:strokeWidth="5" android:strokeLineCap="round" />
+    <path android:pathData="M54,76 L54,40" android:strokeColor="#FF000000" android:strokeWidth="5" android:strokeLineCap="round" />
+    <path android:pathData="M72,76 L72,64" android:strokeColor="#FF000000" android:strokeWidth="5" android:strokeLineCap="round" />
+    <path android:pathData="M28.5,50 h15 a2.5,2.5 0 0 1 2.5,2.5 v3 a2.5,2.5 0 0 1 -2.5,2.5 h-15 a2.5,2.5 0 0 1 -2.5,-2.5 v-3 a2.5,2.5 0 0 1 2.5,-2.5 z" android:fillColor="#FF000000" />
+    <path android:pathData="M46.5,36 h15 a2.5,2.5 0 0 1 2.5,2.5 v3 a2.5,2.5 0 0 1 -2.5,2.5 h-15 a2.5,2.5 0 0 1 -2.5,-2.5 v-3 a2.5,2.5 0 0 1 2.5,-2.5 z" android:fillColor="#FF000000" />
+    <path android:pathData="M64.5,60 h15 a2.5,2.5 0 0 1 2.5,2.5 v3 a2.5,2.5 0 0 1 -2.5,2.5 h-15 a2.5,2.5 0 0 1 -2.5,-2.5 v-3 a2.5,2.5 0 0 1 2.5,-2.5 z" android:fillColor="#FF000000" />
+</vector>

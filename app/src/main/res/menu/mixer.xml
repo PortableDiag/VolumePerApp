@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_theme"
+        android:icon="@drawable/ic_palette"
+        android:title="@string/theme_terminal"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_diagnostics"
+        android:icon="@drawable/ic_info"
+        android:title="@string/diagnostics"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_session_access"
+        android:title="@string/grant_session_access"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_max_gain"
+        android:title="@string/max_gain"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_reset"
+        android:title="@string/reset_all"
+        app:showAsAction="never" />
+</menu>

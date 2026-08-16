@@ -1,0 +1,24 @@
+# Build output
+build/
+.gradle/
+dist/
+*.apk
+*.aab
+
+# Local machine config — sdk.dir is a path on this box, not a project setting
+local.properties
+
+# Signing. The key lives in the keystore vault, never in the tree.
+keystore.properties
+*.jks
+*.keystore
+*.p12
+
+# The Magisk module tree carries a built APK at package time; the source of
+# truth is dist/, not this copy.
+magisk/system/priv-app/VolumePerApp/*.apk
+
+# Editors
+.idea/
+*.iml
+.DS_Store

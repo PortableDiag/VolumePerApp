@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+        Only the two window-light flags differ at night; every colour resolves
+        through the values-night palette on its own, so both schemes get their
+        dark variant without a second copy of the theme.
+    -->
+    <style name="Theme.VolumePerApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorOnPrimary">@color/text_on_brand</item>
+        <item name="colorPrimaryContainer">@color/brand_soft</item>
+        <item name="colorOnPrimaryContainer">@color/brand</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorOnSecondary">@color/text_on_brand</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/divider</item>
+        <item name="colorOutlineVariant">@color/divider</item>
+        <item name="android:colorBackground">@color/bg</item>
+        <item name="colorOnBackground">@color/text_primary</item>
+        <item name="android:windowBackground">@color/bg</item>
+
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+
+        <item name="materialCardViewStyle">@style/Widget.VolumePerApp.Card</item>
+        <item name="sliderStyle">@style/Widget.VolumePerApp.Slider</item>
+        <item name="toolbarStyle">@style/Widget.VolumePerApp.Toolbar</item>
+        <item name="materialButtonStyle">@style/Widget.VolumePerApp.Button</item>
+        <item name="popupMenuStyle">@style/Widget.VolumePerApp.PopupMenu</item>
+    </style>
+</resources>

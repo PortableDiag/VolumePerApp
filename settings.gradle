@@ -1,0 +1,22 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "VolumePerApp"
+include ':app'
+
+// Test fixture, never shipped: an app that does nothing but emit a steady tone,
+// so the routing engine has a known signal to divert and attenuate.
+include ':tone'
+project(':tone').projectDir = file('tools/tone')

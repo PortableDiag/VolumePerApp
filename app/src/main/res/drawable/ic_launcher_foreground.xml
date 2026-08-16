@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Three faders at three different heights — the whole idea of the app in one
+    mark: not one volume, but one per app. Everything sits inside the central
+    72dp safe zone so no mask shape can clip a knob.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Tracks: dim, so the knobs are what the eye lands on. -->
+    <path
+        android:pathData="M36,32 L36,76"
+        android:strokeColor="#66FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,32 L54,76"
+        android:strokeColor="#66FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M72,32 L72,76"
+        android:strokeColor="#66FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+
+    <!-- Travelled portion of each track, bright: the level that is set. -->
+    <path
+        android:pathData="M36,76 L36,54"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,76 L54,40"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M72,76 L72,64"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round" />
+
+    <!-- Knobs. -->
+    <path
+        android:pathData="M28.5,50 h15 a2.5,2.5 0 0 1 2.5,2.5 v3 a2.5,2.5 0 0 1 -2.5,2.5 h-15 a2.5,2.5 0 0 1 -2.5,-2.5 v-3 a2.5,2.5 0 0 1 2.5,-2.5 z"
+        android:fillColor="#FFFFFFFF" />
+    <path
+        android:pathData="M46.5,36 h15 a2.5,2.5 0 0 1 2.5,2.5 v3 a2.5,2.5 0 0 1 -2.5,2.5 h-15 a2.5,2.5 0 0 1 -2.5,-2.5 v-3 a2.5,2.5 0 0 1 2.5,-2.5 z"
+        android:fillColor="#FFFFFFFF" />
+    <path
+        android:pathData="M64.5,60 h15 a2.5,2.5 0 0 1 2.5,2.5 v3 a2.5,2.5 0 0 1 -2.5,2.5 h-15 a2.5,2.5 0 0 1 -2.5,-2.5 v-3 a2.5,2.5 0 0 1 2.5,-2.5 z"
+        android:fillColor="#FFFFFFFF" />
+</vector>

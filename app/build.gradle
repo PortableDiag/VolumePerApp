@@ -1,0 +1,86 @@
+plugins {
+    id 'com.android.application'
+}
+
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
+android {
+    namespace 'com.volumeperapp.app'
+    compileSdk 35
+    buildToolsVersion "35.0.0"
+
+    defaultConfig {
+        applicationId "com.volumeperapp.app"
+        // 26 is the floor for adaptive icons and AudioPlaybackConfiguration;
+        // the routing engine itself needs 29 and degrades cleanly below it.
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "0.1.0"
+    }
+
+    signingConfigs {
+        release {
+            if (keystoreProperties['storeFile']) {
+                storeFile file("${project.rootDir}/${keystoreProperties['storeFile']}")
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (keystoreProperties['storeFile']) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+        }
+        debug {
+            applicationIdSuffix ''
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    lint {
+        // This app reaches non-SDK interfaces on purpose. It is installed into
+        // /system/priv-app by its Magisk module and declares
+        // android:usesNonSdkApi="true", which is the platform's own documented
+        // allowance for a system app to do exactly this — see
+        // ApplicationInfo.isAllowedToUseHiddenApis(). Per-app volume does not
+        // exist in the public SDK at all, so a lint rule that forbids the only
+        // API that implements the feature cannot be satisfied, only acknowledged.
+        //
+        // Every such call goes through audio/Hidden.java, which reports a moved
+        // or missing member by name instead of crashing, and Diagnostics shows
+        // that report to the user. That is the mitigation the rule is asking for.
+        disable += ['BlockedPrivateApi', 'PrivateApi', 'SoonBlockedPrivateApi',
+                    'DiscouragedPrivateApi']
+        abortOnError true
+    }
+
+    packagingOptions {
+        resources.excludes += ['META-INF/*.version', 'kotlin/**', 'DebugProbesKt.bin']
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.activity:activity:1.9.3'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+}

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VolumePerApp</string>
+
+    <string name="mixer">Mixer</string>
+    <string name="add_app">Add app</string>
+    <string name="diagnostics">Diagnostics</string>
+    <string name="reset_all">Reset every fader</string>
+    <string name="theme_ocean">Ocean theme</string>
+    <string name="theme_terminal">Terminal theme</string>
+    <string name="grant_session_access">Grant playback detection</string>
+
+    <string name="section_playing">Playing now</string>
+    <string name="section_mixer">Your mixer</string>
+    <string name="section_streams">System streams</string>
+
+    <string name="engine_active">Per-app volume active</string>
+    <string name="engine_limited">Limited mode</string>
+
+    <string name="banner_privileged_title">Privileged mode</string>
+    <string name="banner_privileged_body">Audio is diverted per app, gain applied, and re-rendered. The faders below are real.</string>
+    <string name="banner_limited_title">Limited mode — per-app faders are inert</string>
+    <string name="banner_limited_body">MODIFY_AUDIO_ROUTING is not granted, so nothing can be diverted. Install the Magisk module to move this app into /system/priv-app. System streams below still work.</string>
+    <string name="banner_idle_title">Nothing is adjusted</string>
+    <string name="banner_idle_body" formatted="false">An app at 100 % is never routed, so it costs nothing. Move a fader and the engine starts.</string>
+    <string name="banner_action">What is missing?</string>
+
+    <string name="empty_mixer_title">No apps on the mixer yet</string>
+    <string name="empty_mixer_body">Add the apps you want your own fader for. Anything currently playing shows up here on its own.</string>
+
+    <string name="mute">Mute</string>
+    <string name="unmute">Unmute</string>
+    <string name="remove">Remove</string>
+    <string name="playing_now">playing</string>
+    <string name="routed">routed</string>
+    <string name="boosted">boost clips</string>
+    <string name="capture_blocked">blocks capture</string>
+
+    <string name="stream_media">Media</string>
+    <string name="stream_ring">Ringtone</string>
+    <string name="stream_alarm">Alarm</string>
+    <string name="stream_notification">Notification</string>
+    <string name="stream_call">Call</string>
+    <string name="stream_system">System</string>
+
+    <string name="channel_engine">Routing engine</string>
+    <string name="channel_engine_desc">Shown while audio is being diverted and re-rendered.</string>
+
+    <string name="picker_title">Add an app</string>
+    <string name="picker_hint">Search installed apps</string>
+
+    <string name="diag_title">Diagnostics</string>
+    <string name="diag_copy">Copy report</string>
+    <string name="diag_copied">Report copied</string>
+    <string name="diag_refresh">Re-probe</string>
+
+    <string name="session_access_prompt">VolumePerApp needs notification-listener access to see which app is playing. It reads no notifications — the permission is the only way to reach getActiveSessions().</string>
+    <string name="reset_done" formatted="false">Every fader is back to 100 %</string>
+    <string name="max_gain">Fader ceiling</string>
+</resources>

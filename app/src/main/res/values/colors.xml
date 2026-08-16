@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Two schemes, both DayNight. Ocean is the default; Terminal is the
+        phosphor-green variant. Every colour here has a values-night twin, so a
+        theme choice and a light/dark choice are independent of each other.
+    -->
+
+    <!-- ============================ Ocean (light) ============================ -->
+    <color name="brand">#1D4ED8</color>
+    <color name="brand_dark">#152C6B</color>
+    <color name="brand_soft">#DBEAFE</color>
+    <color name="accent">#0891B2</color>
+    <color name="text_on_brand">#FFFFFF</color>
+
+    <color name="bg">#F4F6FB</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#EAF0FA</color>
+    <color name="surface_elevated">#FFFFFF</color>
+
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#5B6B85</color>
+    <color name="divider">#DDE5F1</color>
+
+    <!-- =========================== Terminal (light) ========================== -->
+    <!-- Neutral surfaces so green reads as a signal, not as a tint. -->
+    <color name="brand_green">#0B8F3F</color>
+    <color name="brand_green_dark">#06642B</color>
+    <color name="brand_green_soft">#DCF2E4</color>
+    <color name="accent_green">#0E9F6E</color>
+
+    <color name="bg_green">#F2F4F2</color>
+    <color name="surface_green">#FFFFFF</color>
+    <color name="surface_variant_green">#E9ECE9</color>
+    <color name="divider_green">#DCE2DC</color>
+    <color name="text_primary_green">#101510</color>
+    <color name="text_secondary_green">#5A665A</color>
+
+    <!-- ============================== Semantics ============================= -->
+    <!-- Status colours are named by meaning, so the mode banner reads the same
+         in both schemes and in a screenshot that lost its palette. -->
+    <color name="state_ok">#15803D</color>
+    <color name="state_ok_bg">#DCFCE7</color>
+    <color name="state_warn">#B45309</color>
+    <color name="state_warn_bg">#FEF3C7</color>
+    <color name="state_bad">#B91C1C</color>
+    <color name="state_bad_bg">#FEE2E2</color>
+
+    <color name="playing">#16A34A</color>
+    <color name="muted">#94A3B8</color>
+    <color name="boost">#C2410C</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

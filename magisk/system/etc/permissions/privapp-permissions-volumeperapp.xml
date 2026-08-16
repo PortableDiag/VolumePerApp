@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Privileged-permission grant for VolumePerApp.
+
+    A permission with protectionLevel signature|privileged is granted to a
+    /system/priv-app only when it is named here. On a device with
+    ro.control_privapp_permissions=enforce, a privileged permission that the
+    manifest requests and this file omits is a boot-time failure — so this list
+    must match the manifest exactly, and the manifest deliberately requests
+    nothing it does not use.
+
+    MODIFY_AUDIO_ROUTING  registering an AudioPolicy at all
+    CAPTURE_AUDIO_OUTPUT  reading the loopback mix back out
+    CAPTURE_MEDIA_OUTPUT  capturing apps that opted out of playback capture
+-->
+<permissions>
+    <privapp-permissions package="com.volumeperapp.app">
+        <permission name="android.permission.MODIFY_AUDIO_ROUTING" />
+        <permission name="android.permission.CAPTURE_AUDIO_OUTPUT" />
+        <permission name="android.permission.CAPTURE_MEDIA_OUTPUT" />
+    </privapp-permissions>
+</permissions>
