@@ -26,7 +26,8 @@ breaks when some other process updates.
 - **Root**, with **Magisk**. The APK has to live in `/system/priv-app` to be
   granted `MODIFY_AUDIO_ROUTING`, which is `signature|privileged`.
 - **Android 10 (API 29) or newer.** The uid-matching `AudioMix` does not exist
-  before then. Verified against **Android 15 / API 35**.
+  before then. Developed and measured against **Android 15 / API 35**, and
+  confirmed working on a physical device with the Magisk module flashed.
 
 Without root the app still installs and runs, in **Limited mode**: the system
 stream faders work, playback detection works, and the per-app faders are visibly
@@ -108,9 +109,9 @@ docs/hidden-api-api35.txt    what that probe found on Android 15
 tools/build-magisk.sh <signed.apk>      # packages the module zip into dist/
 ```
 
-Signing goes through the local keystore vault rather than a key in the tree, so
-there is no `keystore.properties` here. `app/build.gradle` will use one if you
-add it.
+The release builds published here are signed out-of-tree, so this repo contains
+no key and no `keystore.properties`. `app/build.gradle` reads one if you add it,
+and produces an unsigned APK if you don't.
 
 ## Verifying it actually works
 
@@ -133,6 +134,9 @@ scale. Route it, set a fader, and read the numbers back:
 Measured on Android 15 / API 35 with the signed release build installed as a
 priv-app. `dumpsys audio` independently confirms the diversion: the routed app
 sits on the remote-submix device while VolumePerApp holds the speaker.
+
+The same build has since been flashed as a Magisk module on real hardware and
+works there, so the numbers above are not an emulator artefact.
 
 ## Known limits
 
@@ -163,6 +167,17 @@ sits on the remote-submix device while VolumePerApp holds the speaker.
   `tools/probe/Probe.java` against a new Android version before assuming
   anything.
 
+## Building it yourself
+
+Nothing in this repo is machine-specific: there is no `local.properties`, no
+`keystore.properties` and no key. `./gradlew :app:assembleRelease` produces an
+unsigned APK; sign it with your own key, then run `tools/build-magisk.sh` to get
+a flashable module around it. A module signed by a different key than one already
+installed will need the old one removed first, as usual.
+
 ## Licence
 
-Personal project. No licence granted.
+No licence is granted. The source is published to be read, corrected and learned
+from — particularly the parts about which hidden calls exist and which of them
+are traps. If you want to do something with it that a missing licence prevents,
+ask.

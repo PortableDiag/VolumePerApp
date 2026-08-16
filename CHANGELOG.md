@@ -2,6 +2,25 @@
 
 All notable changes to VolumePerApp.
 
+## [0.2.0] — 2026-08-16
+
+**Confirmed working on real hardware.** The Magisk module was flashed on a
+physical device and per-app volume works there, not only on the emulator. That
+retires the caveat every note in this project carried until now.
+
+No engine changes. Anyone already running the 0.1.0 module has the same audio
+code and does not need to re-flash; this release exists to mark the source
+being published and the emulator-only qualifier being gone.
+
+### Changed
+
+- Version bumped for the first public source release.
+- `docs/screenshots/app-picker.png` removed, and scrubbed from git history: it
+  was a screenshot of the emulator's app list and showed the package names of
+  unrelated private projects. Nothing about VolumePerApp, and not mine to
+  publish.
+- README states plainly that the route is verified on real hardware.
+
 ## [0.1.0] — 2026-08-16
 
 First working version. Per-app volume verified end to end on Android 15 / API 35
