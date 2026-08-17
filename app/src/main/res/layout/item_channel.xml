@@ -63,7 +63,7 @@
                         android:paddingHorizontal="8dp"
                         android:paddingVertical="2dp"
                         android:text="@string/playing_now"
-                        android:textColor="@color/playing"
+                        android:textColor="?attr/colorSecondary"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         android:visibility="gone" />

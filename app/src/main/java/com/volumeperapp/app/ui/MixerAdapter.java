@@ -142,21 +142,24 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             int bg;
             switch (b.level) {
                 case OK:
-                    // Status colours are shared by both schemes on purpose: green
-                    // means working and amber means broken whichever theme is on,
-                    // and in a screenshot that lost its palette.
-                    fg = ContextCompat.getColor(context, R.color.state_ok);
-                    bg = ContextCompat.getColor(context, R.color.state_ok_bg);
+                    // The working state is the app's *normal* state, so it wears
+                    // the theme's own accent — blue under Ocean, green under
+                    // Terminal. It used to be a fixed green, which meant the
+                    // banner turned green on the blue theme the moment anything
+                    // was adjusted, and never changed when the theme was toggled.
+                    fg = themeColor(com.google.android.material.R.attr.colorPrimary);
+                    bg = themeColor(com.google.android.material.R.attr.colorPrimaryContainer);
                     break;
                 case WARN:
+                    // Amber stays fixed, and is the one that should. This banner
+                    // means the faders below do nothing, which has to alarm in
+                    // any theme and in an export that lost its palette. Only the
+                    // exceptional states break out of the scheme.
                     fg = ContextCompat.getColor(context, R.color.state_warn);
                     bg = ContextCompat.getColor(context, R.color.state_warn_bg);
                     break;
                 default:
-                    // The neutral banner carries no status, so it should follow
-                    // the chosen scheme. Naming R.color.surface_variant here
-                    // pinned it to Ocean and left it unchanged by the theme
-                    // toggle — these must be theme attributes, not resources.
+                    // Carries no status at all, so it follows the scheme too.
                     fg = themeColor(com.google.android.material.R.attr.colorOnSurfaceVariant);
                     bg = themeColor(com.google.android.material.R.attr.colorSurfaceVariant);
                     break;

@@ -2,6 +2,36 @@
 
 All notable changes to VolumePerApp.
 
+## [0.2.2] — 2026-08-16
+
+### Fixed
+
+- **The "Privileged mode" banner was green in both themes.** On Ocean it turned
+  green the moment anything was adjusted, clashing with an otherwise blue screen,
+  and toggling the theme did not change it. It now wears the theme's own accent —
+  blue under Ocean, green under Terminal — via `colorPrimary` /
+  `colorPrimaryContainer`.
+
+  This is a reversal. 0.2.1 fixed only the neutral banner and kept the success
+  banner a fixed green *deliberately*, on the reasoning that status colours
+  should read the same in any scheme. That reasoning was wrong for the success
+  case: "working" is this app's normal state, not an exception, so it belongs in
+  the theme's accent. Only genuine exceptions should break out of the scheme.
+
+- **The "playing" badge was a fixed green** for the same reason and with the same
+  result — a stray green pip on the blue theme. Now `colorSecondary`, which is
+  cyan under Ocean and green under Terminal, and stays distinct from the
+  `colorPrimary` "routed" badge beside it.
+
+- The banner stripe's XML default was a fixed green too, visible for one frame
+  before binding. Now `?attr/colorPrimary`.
+
+**Still deliberately fixed, and verified against both themes:** the amber
+**Limited mode** banner, the orange **boost clips** badge and the red **blocks
+capture** badge. Those are exceptions — they have to alarm regardless of scheme,
+and in an export with no palette at all. Amber was checked pixel-exact against
+Terminal: `#FBBF24` on `#2E2208`, over a true-black page with a `#22DD6A` slider.
+
 ## [0.2.1] — 2026-08-16
 
 Two things reported from real use on the OnePlus 12.
