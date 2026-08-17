@@ -46,6 +46,21 @@ Without root the app still installs and runs, in **Limited mode**: the system
 stream faders work, playback detection works, and the per-app faders are visibly
 marked as inert rather than silently doing nothing.
 
+## Using it
+
+Each app gets a channel strip: a fader from 0 % to the ceiling you choose
+(100 / 150 / 200 / 400 %), a mute, and a **reset** that puts it back to 100 % and
+unmutes in one tap. The reset only appears once a strip is adjusted, so a strip
+at 100 % stays uncluttered.
+
+The fader also has a **detent at 100 %** — release within 2 % and it lands
+exactly on 100, because a one-step slider across that range otherwise makes 100 a
+pixel-wide target. It snaps on release rather than mid-drag, so a deliberate 93 %
+is left alone.
+
+Apps currently making sound are pinned to the top under **Playing now**, whether
+or not you have added them.
+
 ## Install
 
 1. Flash `dist/VolumePerApp-magisk-v<version>.zip` in Magisk → Modules →
@@ -147,6 +162,14 @@ scale. Route it, set a fader, and read the numbers back:
 Measured on Android 15 / API 35 with the signed release build installed as a
 priv-app. `dumpsys audio` independently confirms the diversion: the routed app
 sits on the remote-submix device while VolumePerApp holds the speaker.
+
+**What the emulator does and does not prove.** It proves the engine: the gain
+numbers above are real, and the diversion is visible from outside the app. It
+does **not** prove the permission plumbing — the AOSP emulator does not enforce
+`MODIFY_AUDIO_ROUTING`, and a build installed to `/data/app` under a different
+application id, with the permission ungranted and no `PRIVILEGED` flag, still
+registers its policy successfully there. So a working emulator build is not
+evidence that the Magisk module is doing anything. Only a real device shows that.
 
 The same build has since been flashed as a Magisk module on a OnePlus 12
 (Android 15, OxygenOS V15.0.0, Magisk 30.1) and works there, so the numbers above
