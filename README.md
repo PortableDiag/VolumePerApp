@@ -61,6 +61,40 @@ is left alone.
 Apps currently making sound are pinned to the top under **Playing now**, whether
 or not you have added them.
 
+### Suppressing the system volume warning
+
+Toolbar → **Suppress volume warning**.
+
+Android does two things to a headset that this app's users tend to object to: it
+warns when you raise past the "safe" level, and it quietly lowers the volume on
+you after a long listen. **Those are one mechanism, not two.** Both are gated on
+`SoundDoseHelper.mSafeMediaVolumeState` — the dialog is what the ACTIVE state
+does when you raise, the lowering is what it does when the 20-hour
+`mMusicActiveMs` timer re-arms it. There is no lever that suppresses one and
+keeps the other, so this is deliberately one checkbox.
+
+**It takes effect at the next restart**, and the app says so rather than
+implying otherwise. `SoundDoseHelper.updateSafeMediaVolume_l` decides the state
+from `audio.safemedia.bypass`, and it runs only from `onConfigureSafeMedia` —
+whose two callers are `AudioService.onSystemReady` (forced) and
+`onConfigurationChanged` (not forced, so it re-runs on an MCC change alone). The
+property is read once per boot, before zygote, and setting it at runtime does
+nothing. Writing `Settings.Global.audio_safe_volume_state` directly is worse
+than useless: AudioService recomputes and overwrites it on the next boot.
+
+So the app does not apply this itself. It records the request in
+**device-protected storage** and the Magisk module's `post-fs-data.sh` reads it
+and sets the property before `system_server` starts. Device-protected rather
+than ordinary preferences because `post-fs-data` runs before the user is
+unlocked — at that moment `/data/user_de/0/<pkg>` is readable and
+`/data/data/<pkg>` does not exist yet.
+
+**Diagnostics** shows the request, the property, and the platform's own state,
+which is the one to believe when they disagree.
+
+This removes a hearing protection. Sustained high volume through headphones
+causes permanent hearing loss, and the app asks once before turning it on.
+
 ## Install
 
 1. Flash `dist/VolumePerApp-magisk-v<version>.zip` in Magisk → Modules →
@@ -68,6 +102,10 @@ or not you have added them.
 2. Reboot.
 3. Open VolumePerApp. The banner at the top of the mixer says **Privileged mode**
    when it worked.
+
+The module also carries `post-fs-data.sh`, which suppresses the system volume
+warning at boot — but only while the app's setting asks for it, so it does
+nothing until you turn that on.
 
 If it still says Limited, open **Diagnostics** from the toolbar. It walks the
 same call chain the engine walks and names the step that failed — missing
@@ -117,6 +155,8 @@ app/src/main/java/com/volumeperapp/app/
   audio/
     Hidden.java              reflection over android.media.audiopolicy, with
                              named failures instead of stack traces
+    SafeVolume.java          the platform's hearing-safety nag, and the one
+                             boot-time switch that turns it off
     AudioPolicyBridge.java   the only class that speaks AudioPolicy/AudioMix
     StreamPump.java          one diverted app: read, scale, write, meter
     RoutingEngine.java       decides *when* to divert; owns the routed/pumping sets

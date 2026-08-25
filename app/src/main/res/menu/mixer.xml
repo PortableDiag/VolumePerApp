@@ -20,6 +20,11 @@
         android:title="@string/max_gain"
         app:showAsAction="never" />
     <item
+        android:id="@+id/action_safe_volume"
+        android:checkable="true"
+        android:title="@string/safe_volume"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_reset"
         android:title="@string/reset_all"
         app:showAsAction="never" />

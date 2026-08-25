@@ -20,6 +20,7 @@ import com.volumeperapp.app.R;
 import com.volumeperapp.app.audio.MixerService;
 import com.volumeperapp.app.audio.PlaybackWatcher;
 import com.volumeperapp.app.audio.RoutingEngine;
+import com.volumeperapp.app.audio.SafeVolume;
 import com.volumeperapp.app.data.AppEntry;
 import com.volumeperapp.app.data.AppRepository;
 import com.volumeperapp.app.data.VolumeStore;
@@ -51,6 +52,7 @@ public final class MixerActivity extends AppCompatActivity
     private AudioManager audioManager;
     private MixerAdapter adapter;
     private RecyclerView list;
+    private MaterialToolbar toolbar;
 
     private static final int[] STREAMS = {
             AudioManager.STREAM_MUSIC,
@@ -71,9 +73,10 @@ public final class MixerActivity extends AppCompatActivity
         engine = MixerService.engine(this);
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
         toolbar.setOnMenuItemClickListener(this::onMenu);
-        updateThemeMenuTitle(toolbar);
+        updateThemeMenuTitle();
+        updateSafeVolumeMenu();
 
         adapter = new MixerAdapter(this, this);
         list = findViewById(R.id.list);
@@ -94,7 +97,7 @@ public final class MixerActivity extends AppCompatActivity
                 : R.style.Theme_VolumePerApp;
     }
 
-    private void updateThemeMenuTitle(MaterialToolbar toolbar) {
+    private void updateThemeMenuTitle() {
         boolean terminal = "terminal".equals(store.theme());
         toolbar.getMenu().findItem(R.id.action_theme)
                 .setTitle(terminal ? R.string.theme_ocean : R.string.theme_terminal);
@@ -110,6 +113,9 @@ public final class MixerActivity extends AppCompatActivity
         engine.watcher().refresh();
         // Then start the engine if anything is adjusted; harmless when nothing is.
         MixerService.sync(this);
+        // The request and the effect disagree until the next restart, and a
+        // restart is exactly what happens between two visits to this screen.
+        updateSafeVolumeMenu();
         rebuild();
     }
 
@@ -342,6 +348,9 @@ public final class MixerActivity extends AppCompatActivity
         } else if (id == R.id.action_max_gain) {
             showMaxGainDialog();
             return true;
+        } else if (id == R.id.action_safe_volume) {
+            onSafeVolumeToggled(item.isChecked());
+            return true;
         } else if (id == R.id.action_reset) {
             store.resetAll();
             MixerService.sync(this);
@@ -351,6 +360,40 @@ public final class MixerActivity extends AppCompatActivity
             return true;
         }
         return false;
+    }
+
+    private void updateSafeVolumeMenu() {
+        toolbar.getMenu().findItem(R.id.action_safe_volume)
+                .setChecked(SafeVolume.isRequested(this));
+    }
+
+    /**
+     * Turning it off is immediate and reversible, so it just happens. Turning it
+     * on removes a hearing protection, so it is asked once, plainly, with what
+     * it costs stated rather than buried.
+     */
+    private void onSafeVolumeToggled(boolean wasChecked) {
+        if (wasChecked) {
+            applySafeVolume(false);
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.safe_volume_title)
+                .setMessage(R.string.safe_volume_prompt)
+                .setPositiveButton(R.string.safe_volume_confirm, (d, w) -> applySafeVolume(true))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private void applySafeVolume(boolean requested) {
+        if (!SafeVolume.setRequested(this, requested)) {
+            Toast.makeText(this, R.string.safe_volume_failed, Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this,
+                    requested ? R.string.safe_volume_on : R.string.safe_volume_off,
+                    Toast.LENGTH_LONG).show();
+        }
+        updateSafeVolumeMenu();
     }
 
     private void openSessionAccess() {

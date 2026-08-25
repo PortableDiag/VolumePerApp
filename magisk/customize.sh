@@ -42,10 +42,13 @@ fi
 
 set_perm_recursive "$MODPATH/system/priv-app"        0 0 0755 0644
 set_perm_recursive "$MODPATH/system/etc/permissions" 0 0 0755 0644
+set_perm            "$MODPATH/post-fs-data.sh"       0 0 0755
 
 ui_print "* APK          -> /system/priv-app/VolumePerApp/"
 ui_print "* Permissions  -> /system/etc/permissions/privapp-permissions-volumeperapp.xml"
 ui_print "* Grants       -> MODIFY_AUDIO_ROUTING, CAPTURE_AUDIO_OUTPUT, CAPTURE_MEDIA_OUTPUT"
+ui_print "* Boot script  -> suppresses the system volume warning, but only while"
+ui_print "*                 the app's setting asks for it. Off unless you turn it on."
 ui_print " "
 ui_print "  Reboot, then open VolumePerApp. The banner at the top of the"
 ui_print "  mixer says Privileged mode when this worked. If it still says"

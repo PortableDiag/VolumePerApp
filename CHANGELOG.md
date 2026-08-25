@@ -2,6 +2,54 @@
 
 All notable changes to VolumePerApp.
 
+## [0.3.0] — 2026-08-25
+
+### Added
+
+- **Suppress the system volume warning** — toolbar → *Suppress volume warning*.
+
+  Android does two annoying things to a headset: it shows a warning when you
+  raise past the "safe" level, and it lowers the volume on you after a long
+  listen. **These are one mechanism, not two**, so this is one setting and not
+  the two that were asked for. Both are gated on
+  `SoundDoseHelper.mSafeMediaVolumeState`: the dialog is what the ACTIVE state
+  does when you raise, and the lowering is what it does when the 20-hour
+  `mMusicActiveMs` timer re-arms it. Nothing suppresses one and keeps the other.
+
+  **It takes effect at the next restart, and the app says so** rather than
+  pretending the switch did something now. The platform decides this in
+  `SoundDoseHelper.updateSafeMediaVolume_l`, which runs only from
+  `onConfigureSafeMedia` — whose two callers are `AudioService.onSystemReady`
+  (forced) and `onConfigurationChanged` (not forced, so it re-runs on an MCC
+  change alone). `audio.safemedia.bypass` is therefore read once per boot,
+  before zygote.
+
+  So the app does not apply it. It writes a flag to **device-protected
+  storage** and the module's new `post-fs-data.sh` reads it and sets the
+  property before `system_server` starts. Device-protected rather than the
+  ordinary preferences because `post-fs-data` runs before the user is unlocked:
+  measured on the device at that moment, `/data/user_de/0/<pkg>` is listable and
+  `/data/data/<pkg>` does not exist yet.
+
+  Turning it *on* is confirmed once, plainly, with what it costs stated. This
+  removes a hearing protection and the dialog says so. Turning it back off is
+  immediate and needs no confirmation.
+
+- **Diagnostics reports it** — the request, the property, the platform's own
+  state, and which of the two the user should believe when they disagree.
+
+### Fixed
+
+- **The Magisk module listed itself as "by VolumePerApp".** It is by
+  **PortableDiag**; the app is not its own author. Reported from real use on
+  2026-08-19 and parked as not worth a release of its own, which is why it rides
+  along here.
+
+### You do need to re-flash this one
+
+Unlike 0.2.x, this release changes the module: `post-fs-data.sh` is new and the
+suppression cannot work without it. The audio engine is unchanged.
+
 ## [0.2.2] — 2026-08-16
 
 ### Fixed

@@ -19,6 +19,7 @@ import com.volumeperapp.app.R;
 import com.volumeperapp.app.audio.AudioPolicyBridge;
 import com.volumeperapp.app.audio.MixerService;
 import com.volumeperapp.app.audio.RoutingEngine;
+import com.volumeperapp.app.audio.SafeVolume;
 import com.volumeperapp.app.data.VolumeStore;
 
 /**
@@ -88,6 +89,17 @@ public final class DiagnosticsActivity extends AppCompatActivity {
         sb.append("== ENGINE ==\n");
         RoutingEngine engine = MixerService.engine(this);
         sb.append(engine.report());
+        sb.append('\n');
+
+        sb.append("== HEARING SAFETY ==\n");
+        sb.append("requested (flag file): ")
+          .append(SafeVolume.isRequested(this) ? "yes" : "no").append('\n');
+        String prop = SafeVolume.property();
+        sb.append(SafeVolume.PROPERTY).append(": ")
+          .append(prop == null || prop.isEmpty() ? "unset" : prop).append('\n');
+        sb.append("platform state: ")
+          .append(SafeVolume.stateName(SafeVolume.state(this))).append('\n');
+        sb.append(SafeVolume.status(this)).append('\n');
         sb.append('\n');
 
         sb.append("== VERDICT ==\n");

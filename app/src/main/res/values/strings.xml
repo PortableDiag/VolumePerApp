@@ -59,4 +59,12 @@
     <string name="session_access_prompt">VolumePerApp needs notification-listener access to see which app is playing. It reads no notifications — the permission is the only way to reach getActiveSessions().</string>
     <string name="reset_done" formatted="false">Every fader is back to 100 %</string>
     <string name="max_gain">Fader ceiling</string>
+
+    <string name="safe_volume">Suppress volume warning</string>
+    <string name="safe_volume_title">Suppress the system volume warning?</string>
+    <string name="safe_volume_prompt">Android warns when you raise a headset past its safe level, and lowers the volume on you after a long listen. Both come from one mechanism, so this switch turns off both or neither.\n\nIt takes effect when you restart the phone — the platform reads the setting once at boot and never again. The Magisk module applies it.\n\nThis removes a hearing protection. Sustained high volume through headphones does cause permanent hearing loss.</string>
+    <string name="safe_volume_confirm">Suppress it</string>
+    <string name="safe_volume_on">Suppressed after you restart the phone</string>
+    <string name="safe_volume_off">The system warning returns after you restart the phone</string>
+    <string name="safe_volume_failed">Could not record that — the setting is unchanged</string>
 </resources>
