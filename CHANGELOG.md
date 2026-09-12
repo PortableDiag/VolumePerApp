@@ -46,9 +46,16 @@ All notable changes to VolumePerApp.
 
 ### Not yet confirmed on hardware
 
-The diagnosis is from the phone's own logs, but the fix has been built and not
-yet run there. It is not released and the version is unchanged — nothing here
-asks anybody to re-flash.
+The diagnosis is from the phone's own logs. The fix builds and is installed on
+the test device, but the failure has not yet been reproduced against it.
+
+**There is no release for this.** The version is `0.3.1-test1` / code 6, which
+exists only to keep the build on the phone distinguishable from the published
+0.3.0 — same `versionName` on two different engines is how you end up unable to
+say which one you are looking at, and how a reinstall silently puts the old one
+back. `magisk/module.prop` is deliberately left at v0.3.0: no module has been
+packaged, and `tools/build-magisk.sh` derives it from `app/build.gradle` at
+package time anyway.
 
 ## [0.3.0] — 2026-08-25
 
