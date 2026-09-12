@@ -78,6 +78,15 @@ public final class AudioPolicyBridge {
     private boolean registered;
     private String lastError;
 
+    /**
+     * Bumped every time a policy is registered, so a caller holding an
+     * {@code AudioRecord} from {@link #sinkFor(int)} can tell whether it came
+     * from <em>this</em> policy or a superseded one. A sink outlives the policy
+     * it was made from only as a dead object, and the symptom is an app that is
+     * routed and silent rather than an error.
+     */
+    private int generation;
+
     public AudioPolicyBridge(Context context) {
         this.context = context.getApplicationContext();
         this.audioManager = (AudioManager) this.context.getSystemService(Context.AUDIO_SERVICE);
@@ -89,6 +98,11 @@ public final class AudioPolicyBridge {
 
     public String lastError() {
         return lastError;
+    }
+
+    /** @see #generation */
+    public synchronized int generation() {
+        return generation;
     }
 
     public synchronized List<Integer> routedUids() {
@@ -168,8 +182,10 @@ public final class AudioPolicyBridge {
             }
             policy = built;
             registered = true;
+            generation++;
             lastError = null;
-            Log.i(TAG, "policy registered with " + mixes.size() + " mix(es)");
+            Log.i(TAG, "policy registered with " + mixes.size() + " mix(es)"
+                    + ", generation " + generation);
             return true;
         } catch (Hidden.MissingApi e) {
             lastError = e.getMessage();

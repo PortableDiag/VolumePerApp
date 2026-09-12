@@ -2,6 +2,54 @@
 
 All notable changes to VolumePerApp.
 
+## [Unreleased]
+
+### Fixed
+
+- **Playing or skipping a track in a routed app restarted audio and video in
+  other apps.** Reported from real use: with one app faded and a video playing
+  elsewhere, starting a track made the video loop, and nothing but reloading the
+  page cleared it; skipping tracks did it again.
+
+  The cause was this app's own design. A pump — the loopback `AudioRecord` and
+  the `AudioTrack` that re-renders it — was created when a routed app started
+  playing and destroyed when it stopped, on the reasoning that a thread should
+  not exist while there is no sound to carry. But **opening and closing a
+  `REMOTE_SUBMIX` capture makes the platform re-evaluate routing, and that
+  invalidates the output tracks of unrelated apps**, which they handle by
+  rebuilding their player. A track skip did it twice.
+
+  Read off the device rather than reasoned from the docs: `dumpsys audio` showed
+  bursts of new `REMOTE_SUBMIX` record sessions from this app — five in 28
+  seconds during ordinary listening — and, in `PlaybackActivityMonitor`, another
+  app's four media players carrying five generations of port ids against
+  unchanged `piid`s. Same players, repeatedly re-routed.
+
+  **A pump now lasts as long as the routing rather than as long as the sound.**
+  Both ends are opened once when an app becomes routed; when it falls silent for
+  two seconds the output track is *parked* (`pause` + `flush`) instead of being
+  released, and unparks on the next non-silent buffer. Two seconds because the
+  gap between two tracks is far shorter, so a skip no longer touches either
+  endpoint. The cost is an idle reader per adjusted app.
+
+- **A pump orphaned by a policy rebuild kept a dead record sink.** `syncRouting`
+  claimed every pump was rebuilt against the new policy; it was not — the
+  reconcile only dropped pumps whose app had stopped playing, so after a rebuild
+  an app could be routed, look healthy, and be silent. Sinks now carry the
+  policy generation they were made from and are rebuilt when it moves.
+
+- **The output's `AudioAttributes` did not do what its comment claimed.** It set
+  `FLAG_LOW_LATENCY` and said that was what stopped our own re-rendered output
+  being captured by one of our own mixes. It is not, and never was. The
+  attributes now set `ALLOW_CAPTURE_BY_NONE`, which is; the low-latency request
+  was already on the track itself as `PERFORMANCE_MODE_LOW_LATENCY`.
+
+### Not yet confirmed on hardware
+
+The diagnosis is from the phone's own logs, but the fix has been built and not
+yet run there. It is not released and the version is unchanged — nothing here
+asks anybody to re-flash.
+
 ## [0.3.0] — 2026-08-25
 
 ### Added

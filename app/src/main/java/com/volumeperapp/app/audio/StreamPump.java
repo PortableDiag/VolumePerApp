@@ -17,6 +17,17 @@ import android.util.Log;
  * <p>Gain is volatile and read once per buffer, so moving a slider takes effect
  * within one buffer (~10 ms) without locking the audio thread.
  *
+ * <p><b>A pump lasts as long as the routing, not as long as the sound.</b> Both
+ * endpoints are opened once and kept: creating or releasing a
+ * {@code REMOTE_SUBMIX} capture makes the policy manager re-evaluate routing,
+ * and that invalidates the output tracks of <em>other</em> apps, which is
+ * visible to their users as a video restarting or audio looping. Doing it on
+ * every track change — which is what tying the pump's life to playback meant —
+ * did that several times a minute. When the input falls silent the output track
+ * is <em>parked</em> ({@code pause} + {@code flush}) rather than released, so an
+ * idle routed app costs a blocked reader and a stopped track and disturbs
+ * nothing.
+ *
  * <p>Above 1.0 this is a real amplifier and it will clip. Samples are summed in
  * int and clamped to short range, so overdrive distorts rather than wrapping
  * around into noise, which is the difference between "too loud" and "broken".
@@ -27,6 +38,16 @@ final class StreamPump implements Runnable {
 
     /** ~10 ms at 48 kHz stereo. Small enough not to add audible delay. */
     private static final int FRAMES_PER_BUFFER = 480;
+
+    /**
+     * How much unbroken silence on the way in before the output track is parked.
+     *
+     * <p>Two seconds, because the gap between two tracks in a music app is a
+     * fraction of that and must not be seen as the end of playback — parking
+     * and unparking between tracks is exactly the churn this pump exists to
+     * avoid. A genuine stop costs two seconds of an idle track and nothing else.
+     */
+    private static final long SILENCE_FRAMES_BEFORE_PARK = AudioPolicyBridge.SAMPLE_RATE * 2L;
 
     private final int uid;
     private final AudioRecord in;
@@ -62,6 +83,26 @@ final class StreamPump implements Runnable {
     }
 
     /**
+     * Attributes for the re-rendered output.
+     *
+     * <p>{@code ALLOW_CAPTURE_BY_NONE} is what actually stops our own output
+     * being taken by a playback-capture mix — including one of ours, which
+     * would be a feedback loop. An earlier version set {@code FLAG_LOW_LATENCY}
+     * here with a comment claiming it did that; it does not, and never did. The
+     * low-latency request lives on the track itself, as
+     * {@code PERFORMANCE_MODE_LOW_LATENCY}.
+     */
+    private static AudioAttributes attributes() {
+        AudioAttributes.Builder b = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            b.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_NONE);
+        }
+        return b.build();
+    }
+
+    /**
      * @return a started pump, or null if either endpoint refused to initialise
      *         (which happens when the mix was detached underneath us)
      */
@@ -83,13 +124,7 @@ final class StreamPump implements Runnable {
         AudioTrack out;
         try {
             out = new AudioTrack.Builder()
-                    .setAudioAttributes(new AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            // Never let our own re-rendered output be captured by
-                            // one of our own mixes; that would be a feedback loop.
-                            .setFlags(AudioAttributes.FLAG_LOW_LATENCY)
-                            .build())
+                    .setAudioAttributes(attributes())
                     .setAudioFormat(new AudioFormat.Builder()
                             .setSampleRate(AudioPolicyBridge.SAMPLE_RATE)
                             .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
@@ -175,12 +210,17 @@ final class StreamPump implements Runnable {
         short[] buf = new short[FRAMES_PER_BUFFER * AudioPolicyBridge.CHANNELS];
         try {
             in.startRecording();
-            out.play();
         } catch (Throwable t) {
             Log.w(TAG, "pump for uid " + uid + " could not start", t);
             return;
         }
         Log.i(TAG, "pump running for uid " + uid);
+
+        // The output track is created once and then parked and unparked, never
+        // released and rebuilt. Starting parked means an app that is routed but
+        // silent costs an idle track rather than an active output.
+        boolean parked = true;
+        long silentFrames = 0;
 
         while (running) {
             int n;
@@ -193,6 +233,16 @@ final class StreamPump implements Runnable {
             if (n <= 0) {
                 if (n == AudioRecord.ERROR_INVALID_OPERATION || n == AudioRecord.ERROR_DEAD_OBJECT) {
                     Log.w(TAG, "record sink for uid " + uid + " went away (" + n + ")");
+                    break;
+                }
+                // A blocking read should never come back empty, but this thread
+                // now lives as long as the routing rather than as long as the
+                // sound, so a sink that returned 0 forever would spin a core for
+                // as long as the app stayed adjusted. Yield instead of trusting.
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     break;
                 }
                 continue;
@@ -229,17 +279,45 @@ final class StreamPump implements Runnable {
                 windowFrames = 0;
             }
 
-            int written = 0;
-            while (written < n && running) {
-                int w = out.write(buf, written, n - written);
-                if (w < 0) {
-                    Log.w(TAG, "write failed on uid " + uid + " (" + w + ")");
-                    running = false;
-                    break;
+            int frames = n / AudioPolicyBridge.CHANNELS;
+            if (inPeak > 0) {
+                silentFrames = 0;
+                if (parked) {
+                    try {
+                        out.play();
+                        parked = false;
+                    } catch (Throwable t) {
+                        Log.w(TAG, "could not unpark output for uid " + uid, t);
+                    }
                 }
-                written += w;
+            } else {
+                silentFrames += frames;
+                if (!parked && silentFrames >= SILENCE_FRAMES_BEFORE_PARK) {
+                    try {
+                        out.pause();
+                        out.flush();     // drop what is queued; it is silence
+                        parked = true;
+                    } catch (Throwable t) {
+                        Log.w(TAG, "could not park output for uid " + uid, t);
+                    }
+                }
             }
-            framesCarried += n / AudioPolicyBridge.CHANNELS;
+
+            if (!parked) {
+                int written = 0;
+                while (written < n && running) {
+                    int w = out.write(buf, written, n - written);
+                    if (w < 0) {
+                        Log.w(TAG, "write failed on uid " + uid + " (" + w + ")");
+                        running = false;
+                        break;
+                    }
+                    written += w;
+                }
+                // Counted on the way out, not the way in: a parked pump reads
+                // silence continuously and has carried nothing.
+                framesCarried += frames;
+            }
         }
         Log.i(TAG, "pump stopped for uid " + uid + " after " + framesCarried + " frames");
     }

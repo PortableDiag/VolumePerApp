@@ -141,8 +141,17 @@ no notifications; the permission is the only way to reach that call.
   is the opposite of attenuating it.
 - **An app at 100 % is never routed.** No mix, no thread, no added latency.
   "Leave it alone" costs nothing.
-- **Routed ≠ pumping.** A mix stays attached for any adjusted app; the pump
-  thread and its `AudioTrack` exist only while that app is actually playing.
+- **A pump lasts as long as the routing, not as long as the sound.** Both ends —
+  the loopback `AudioRecord` and the output `AudioTrack` — are opened once when
+  an app becomes routed and kept until it stops being routed. When the app falls
+  silent the output track is *parked* (`pause` + `flush`), not released.
+
+  This costs an idle reader per adjusted app, and it is worth it. Creating or
+  releasing a `REMOTE_SUBMIX` capture makes the platform re-evaluate routing,
+  and that **invalidates other apps' output tracks** — which those apps see as a
+  device change and handle by rebuilding their player. Tying the pump's life to
+  playback meant doing it on every track change, and the visible result was an
+  unrelated video restarting itself every time a routed music app changed track.
 - Adding or removing an app uses `AudioPolicy.attachMixes` / `detachMixes` where
   the build has them (API 35 does), so one app's fader does not interrupt
   another's audio. Older builds fall back to rebuilding the policy.

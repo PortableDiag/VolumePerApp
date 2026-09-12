@@ -25,9 +25,12 @@ import java.util.Set;
  * <ul>
  *   <li><b>Routed</b> — apps whose fader is not at 100 %. A mix is attached for
  *       each; their audio no longer reaches the speaker on its own.</li>
- *   <li><b>Pumping</b> — the subset of routed apps that are actually playing.
- *       A pump is a thread and an {@code AudioTrack}, so it exists only while
- *       there is sound to carry.</li>
+ *   <li><b>Pumping</b> — one pump per routed app, for as long as it stays
+ *       routed. Not "while it is playing": opening and closing the
+ *       {@code REMOTE_SUBMIX} capture re-routes the device and invalidates
+ *       <em>other</em> apps' output tracks, so doing it on every track change
+ *       restarted unrelated video. {@link StreamPump} parks its output track
+ *       through silence instead of being destroyed and rebuilt.</li>
  * </ul>
  *
  * <p>An app at 100 % is never routed at all. That matters: routing adds a buffer
@@ -50,6 +53,9 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
     /** uid -> package, for every routed app. */
     private final Map<Integer, String> routed = new LinkedHashMap<>();
     private final Map<Integer, StreamPump> pumps = new HashMap<>();
+
+    /** uid -> the {@link AudioPolicyBridge#generation()} its sink was made from. */
+    private final Map<Integer, Integer> pumpGeneration = new HashMap<>();
 
     /**
      * More than one thing needs to know when the engine changes state — the
@@ -155,6 +161,7 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
         reconcileWatcher();      // keeps watching if the mixer is still on screen
         for (StreamPump p : pumps.values()) p.stop();
         pumps.clear();
+        pumpGeneration.clear();
         routed.clear();
         bridge.shutdown();
         privileged = false;
@@ -206,9 +213,12 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
             status = "limited — " + friendlyError(bridge.lastError());
         }
 
-        // Attaching or detaching a mix can invalidate existing record sinks, so
-        // every pump is rebuilt against the new policy rather than trusted.
-        restartPumps();
+        // Attaching or detaching a mix can invalidate existing record sinks. The
+        // claim used to be that every pump was rebuilt here; it was not — the
+        // reconcile only ever dropped pumps whose app had stopped, so a sink
+        // orphaned by a policy rebuild survived as a dead object and its app
+        // went quietly silent. The generation stamp is what makes the claim true.
+        reconcilePumps();
         notifyState();
     }
 
@@ -241,52 +251,65 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
     public void onActiveUidsChanged(Set<Integer> uids, Set<String> packages) {
         synchronized (this) {
             if (!running) return;
-            restartPumps();
+            // Who is playing no longer decides which pumps exist. This is only a
+            // retry point for one that failed to open, and the UI refresh below.
+            reconcilePumps();
         }
         notifyState();
     }
 
     /**
-     * Brings the pump set in line with "routed AND playing".
+     * Brings the pump set in line with the routed set — <em>not</em> with who is
+     * playing.
      *
-     * <p>A pump is cheap to create and free to not have, so this is idempotent
-     * and safe to call on every playback change.
+     * <p>This used to mean "routed AND playing", and tearing a pump down the
+     * moment an app went quiet was a real defect rather than a saving. Creating
+     * or releasing the {@code REMOTE_SUBMIX} capture makes the policy manager
+     * re-evaluate routing, which invalidates the output tracks of other apps:
+     * a track skip in a routed music app restarted an unrelated video in the
+     * browser. The device's own {@code dumpsys audio} showed both halves — a
+     * burst of new {@code REMOTE_SUBMIX} record sessions from this app, and
+     * another app's players carrying five generations of port ids for the same
+     * unchanged {@code piid}s.
+     *
+     * <p>So a pump now lasts as long as the routing does, and
+     * {@link StreamPump} parks its output track through silence instead. The
+     * cost of a routed but idle app is a blocked reader and a stopped track.
+     *
+     * <p>Still idempotent and still safe to call on a playback change — it is
+     * kept on that path purely as a retry for a pump that failed to open.
      */
-    private void restartPumps() {
-        Set<Integer> active = new HashSet<>(watcher.activeUids());
-
-        // A media session tells us a package is playing even when the uid was
-        // unreadable, so fold those in.
-        for (String pkg : watcher.activePackages()) {
-            int uid = apps.uidFor(pkg);
-            if (uid >= 0) active.add(uid);
-        }
-
-        // When we cannot see uids at all, run a pump for everything routed;
-        // an idle loopback mix yields silence, which costs a thread and no audio.
-        boolean blind = !watcher.uidReadable() && watcher.activePackages().isEmpty();
+    private void reconcilePumps() {
+        int gen = bridge.generation();
 
         for (Integer uid : new ArrayList<>(pumps.keySet())) {
-            if (!routed.containsKey(uid) || (!blind && !active.contains(uid))) {
+            Integer builtAt = pumpGeneration.get(uid);
+            boolean stale = builtAt == null || builtAt != gen;
+            if (!routed.containsKey(uid) || stale) {
+                if (stale && routed.containsKey(uid)) {
+                    Log.i(TAG, "pump for uid " + uid + " was built against policy "
+                            + builtAt + ", now " + gen + " — rebuilding");
+                }
                 stopPump(uid);
             }
         }
 
         for (Integer uid : routed.keySet()) {
             if (pumps.containsKey(uid)) continue;
-            if (!blind && !active.contains(uid)) continue;
             String pkg = routed.get(uid);
             AudioRecord sink = bridge.sinkFor(uid);
             if (sink == null) continue;
             StreamPump pump = StreamPump.start(uid, sink, store.effectiveGain(pkg));
             if (pump != null) {
                 pumps.put(uid, pump);
+                pumpGeneration.put(uid, gen);
                 Log.i(TAG, "pumping " + pkg + " (uid " + uid + ")");
             }
         }
     }
 
     private void stopPump(int uid) {
+        pumpGeneration.remove(uid);
         StreamPump p = pumps.remove(uid);
         if (p != null) {
             p.stop();
