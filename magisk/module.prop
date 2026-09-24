@@ -1,6 +1,6 @@
 id=volumeperapp
 name=VolumePerApp
-version=v0.3.0
-versionCode=5
+version=v0.3.1
+versionCode=7
 author=PortableDiag
 description=Installs VolumePerApp into /system/priv-app and grants MODIFY_AUDIO_ROUTING, so the app can register an AudioPolicy and give each app its own volume fader. Also suppresses the system volume warning at boot when the app asks for it.

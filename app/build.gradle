@@ -19,8 +19,8 @@ android {
         // the routing engine itself needs 29 and degrades cleanly below it.
         minSdk 26
         targetSdk 35
-        versionCode 6
-        versionName "0.3.1-test1"
+        versionCode 7
+        versionName "0.3.1"
     }
 
     signingConfigs {
