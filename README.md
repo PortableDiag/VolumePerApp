@@ -53,10 +53,13 @@ Each app gets a channel strip: a fader from 0 % to the ceiling you choose
 unmutes in one tap. The reset only appears once a strip is adjusted, so a strip
 at 100 % stays uncluttered.
 
-The fader also has a **detent at 100 %** — release within 2 % and it lands
-exactly on 100, because a one-step slider across that range otherwise makes 100 a
-pixel-wide target. It snaps on release rather than mid-drag, so a deliberate 93 %
-is left alone.
+The fader has **detents at 30, 40, 50 … 100 %** and on up through the boost
+range — release within 4 % of one and it lands exactly on it, because a
+one-step slider makes any round number a pixel-wide target: aim for 30 and you
+get 28 or 34. It snaps on release rather than mid-drag, and there are none below
+30, where a few percent is a large change. To set a value next to a detent on
+purpose, start on the detent and nudge: a drag that begins on 30 and ends on 32
+stays at 32.
 
 Apps currently making sound are pinned to the top under **Playing now**, whether
 or not you have added them.

@@ -4,6 +4,15 @@ All notable changes to VolumePerApp.
 
 ## [Unreleased]
 
+### Changed
+
+- **Detents at every 10 % from 30 % up, not only at 100 %.** Releasing within
+  4 % of 30, 40, 50 … lands exactly on it, so aiming for 30 no longer gives
+  28 or 34. Still release-only, so dragging is never sticky, and none below
+  30 %. A drag that starts on a detent and ends near that same detent is taken
+  as deliberate and left alone, so 32 is still reachable: set 30, then nudge.
+  The pull at 100 % widens from 2 % to 4 % to match. UI only; no engine change.
+
 ### Fixed
 
 - **Playing or skipping a track in a routed app restarted audio and video in

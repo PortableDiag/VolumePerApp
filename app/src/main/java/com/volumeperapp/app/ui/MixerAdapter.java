@@ -42,11 +42,31 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         void onBannerAction();
     }
 
-    /** The value the fader snaps to on release, and what "reset" means. */
-    private static final int DETENT = VolumeStore.DEFAULT_PERCENT;
+    /** Detents sit on every multiple of this, from {@link #DETENT_FLOOR} up. */
+    private static final int DETENT_STEP = 10;
 
-    /** How close to the detent a release has to land to be pulled onto it. */
-    private static final int DETENT_PULL = 2;
+    /** Lowest detent. Below it a few percent is a large change, so none. */
+    private static final int DETENT_FLOOR = 30;
+
+    /** How close to a detent a release has to land to be pulled onto it. */
+    private static final int DETENT_PULL = 4;
+
+    /**
+     * Where a release at {@code pct} settles, given the fader stood at
+     * {@code start} when the finger went down.
+     *
+     * <p>Within {@link #DETENT_PULL} of a detent it lands on the detent. The
+     * exception is the override: a drag that begins on a detent and ends near
+     * that same detent is a deliberate nudge (30 to 32), and is left alone.
+     */
+    static int settle(int pct, int start) {
+        if (pct < DETENT_FLOOR - DETENT_PULL) return pct;
+        int detent = Math.max(DETENT_FLOOR,
+                Math.round(pct / (float) DETENT_STEP) * DETENT_STEP);
+        if (Math.abs(pct - detent) > DETENT_PULL) return pct;
+        if (start == detent) return pct;
+        return detent;
+    }
 
     private final Context context;
     private final Callbacks callbacks;
@@ -287,28 +307,33 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 callbacks.onGainChanged(app, pct);
             });
 
-            // A detent at 100 %. Snapping mid-drag would feel sticky, so it
-            // settles only when the finger lifts: drag freely, let go near
-            // 100 and it lands exactly on 100. This is the half of the fix
-            // that stops 98 % happening, rather than curing it afterwards.
+            // Detents at 30, 40, 50 ... and 100 %. Snapping mid-drag would feel
+            // sticky, so it settles only when the finger lifts: drag freely,
+            // let go at 28 or 34 and it lands exactly on 30. To reach 32 on
+            // purpose, nudge it from the detent: see settle().
             fader.clearOnSliderTouchListeners();
             fader.addOnSliderTouchListener(
                     new com.google.android.material.slider.Slider.OnSliderTouchListener() {
+                        private int start;
+
                         @Override public void onStartTrackingTouch(
-                                @NonNull com.google.android.material.slider.Slider slider) { }
+                                @NonNull com.google.android.material.slider.Slider slider) {
+                            start = Math.round(slider.getValue());
+                        }
 
                         @Override public void onStopTrackingTouch(
                                 @NonNull com.google.android.material.slider.Slider slider) {
                             int pct = Math.round(slider.getValue());
-                            if (pct != DETENT && Math.abs(pct - DETENT) <= DETENT_PULL) {
+                            int detent = settle(pct, start);
+                            if (detent != pct) {
                                 binding = true;
-                                slider.setValue(DETENT);
+                                slider.setValue(detent);
                                 binding = false;
-                                app.gainPercent = DETENT;
-                                readout.setText(String.format(Locale.US, "%d%%", DETENT));
-                                badgeBoost.setVisibility(View.GONE);
-                                reset.setVisibility(app.muted ? View.VISIBLE : View.GONE);
-                                callbacks.onGainChanged(app, DETENT);
+                                app.gainPercent = detent;
+                                readout.setText(String.format(Locale.US, "%d%%", detent));
+                                badgeBoost.setVisibility(detent > 100 ? View.VISIBLE : View.GONE);
+                                reset.setVisibility(app.needsRouting() ? View.VISIBLE : View.GONE);
+                                callbacks.onGainChanged(app, detent);
                             }
                         }
                     });
