@@ -2,6 +2,51 @@
 
 All notable changes to VolumePerApp.
 
+## [0.4.0] — 2026-10-27
+
+### Added
+
+- **A local API.** Off until switched on (overflow menu → **Local API**), then
+  listening on `127.0.0.1:8799` with a generated key. It does everything the
+  mixer screen does — every app's fader and mute, add, remove, reset one or
+  all, the system streams, the theme, the fader ceiling and the volume-warning
+  switch — plus the mode and the Diagnostics report. `GET /api/docs` serves the
+  full reference. Built to the same shape as Lull's, so PhoneAPI can register it
+  as a provider: no pairing and no per-agent switches here, because those live
+  in PhoneAPI.
+- **All seventeen house palettes**, from a theme picker in place of the
+  Ocean/Terminal toggle: Material You, Ocean, Terminal, Trellis, Graphite,
+  Blueprint, Futuristic, Neon, SynthWave, White Glow, Silkscreen, Sticky Notes,
+  Amber Terminal, Phosphor Green, Phosphor P31, Zoro and Nebula. Generated
+  from the house list by `tools/gen-palettes.py`, so a palette change upstream
+  is one re-run. Saved by name; a saved `ocean` or `terminal` carries over.
+
+### Changed
+
+- **Ocean and Terminal now use the house colours**, which differ a little from
+  the ones this app shipped with (they came from LAN Scanner). Terminal's dark
+  form is the house green-on-black, `#33FF77` on `#000300`.
+- **The mixer screen redraws from the store**, so a change made over the API
+  shows at once, including a theme change.
+
+### Verified on hardware
+
+On a OnePlus `CPH2749`, Android 16, installed over the module's priv-app copy:
+still privileged; every read route; auth refusals; a fader moved over the API
+while the app was in the background started the engine (`applied`, policy
+registered, 1 app routed); mute, reset (engine stopped again), an over-ceiling
+gain refused with a reason, theme switched live four times.
+
+### Not verified
+
+- **Monospace type in the mono palettes.** OxygenOS substitutes its own system
+  font for every app on that phone (the fader readout, always declared
+  monospace, renders sans there too), and the emulator was unavailable.
+- **A refused background start.** Android 16 on that phone allowed it, so the
+  fallback (hand the change to a running engine, or answer `deferred`) has not
+  run on hardware; the `deferred` answer itself is unit-tested.
+- **The API coming back after a reboot** when left on.
+
 ## [0.3.1] — 2026-09-24
 
 ### Changed

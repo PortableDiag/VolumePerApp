@@ -4,7 +4,7 @@
     <item
         android:id="@+id/action_theme"
         android:icon="@drawable/ic_palette"
-        android:title="@string/theme_terminal"
+        android:title="@string/theme"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_diagnostics"
@@ -23,6 +23,10 @@
         android:id="@+id/action_safe_volume"
         android:checkable="true"
         android:title="@string/safe_volume"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_api"
+        android:title="@string/api"
         app:showAsAction="never" />
     <item
         android:id="@+id/action_reset"

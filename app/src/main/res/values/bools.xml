@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark bar icons by day; values-night flips it. Only the palettes that
+         follow light/dark use this; a fixed palette sets its own. -->
+    <bool name="vpa_light_bars">true</bool>
+</resources>

@@ -41,7 +41,7 @@ public final class AppPickerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         VolumeStore store = new VolumeStore(this);
-        setTheme(MixerActivity.themeFor(store.theme()));
+        Themes.apply(this, store);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_picker);
 

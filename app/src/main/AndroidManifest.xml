@@ -25,6 +25,15 @@
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!--
+        The local API, and nothing else, needs these two: a listening socket
+        requires INTERNET even on loopback, and its service is a special-use
+        foreground service. Both are normal permissions, so the module's
+        privapp-permissions XML does not list them.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <application
         android:name=".VolumePerApp"
         android:allowBackup="true"
@@ -76,6 +85,15 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
+        </service>
+
+        <service
+            android:name=".api.ApiService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Serves the user-enabled local HTTP API that lets a script on this device control per-app volume" />
         </service>
 
         <receiver

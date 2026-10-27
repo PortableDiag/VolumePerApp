@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The type family for the whole ramp. sans-serif, except in the mono
+         palettes (Terminal, Amber Terminal, Phosphor Green, Phosphor P31). -->
+    <attr name="vpaFontFamily" format="string" />
+</resources>

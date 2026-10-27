@@ -33,10 +33,13 @@ breaks when some other process updates.
 | Device | Android | ROM | Root |
 |---|---|---|---|
 | OnePlus 12 (`CPH2583`) | 15 (API 35) | OxygenOS V15.0.0 | Magisk 30.1 |
+| OnePlus `CPH2749` | 16 (API 36) | OxygenOS 16.0.0.205 | Magisk 30.6 |
 | Android emulator (`sdk_gphone64_x86_64`) | 15 (API 35) | AOSP | priv-app install by hand |
 
-Both are API 35, which is the level the hidden call chain was pinned against —
-so those constants are confirmed rather than assumed on the hardware. A vendor
+The hidden call chain was pinned against API 35, so on those two the constants
+are confirmed rather than assumed. The `CPH2749` on Android 16 registers its
+policy and routes (Diagnostics: "Per-app volume is available"); the gain table
+below was not re-measured there. A vendor
 ROM is the real risk in this design, since OEMs do patch framework; OxygenOS is
 the one that has been tried. If you run it somewhere else, **Diagnostics** will
 tell you whether the chain is intact on your build, and a report of either
@@ -63,6 +66,56 @@ stays at 32.
 
 Apps currently making sound are pinned to the top under **Playing now**, whether
 or not you have added them.
+
+### Themes
+
+The palette button in the toolbar offers all seventeen house palettes: Material
+You (wallpaper colours on Android 12+), Ocean, Terminal, Trellis, Graphite,
+Blueprint, Futuristic, Neon, SynthWave, White Glow, Silkscreen, Sticky Notes,
+Amber Terminal, Phosphor Green, Phosphor P31, Zoro and Nebula. Material You,
+Ocean and Terminal follow the system's light/dark setting; the rest are one
+look each, and the status bar follows that look rather than the system. The
+mono palettes ask for a monospace type ramp; some vendor ROMs (OxygenOS among
+them) substitute their own system font for every app, and win.
+
+Warnings — *Limited mode*, *boost clips*, *blocks capture* — keep their amber,
+orange and red in every palette, so they still read as warnings.
+
+### The local API
+
+**A script or an agent on the phone can do everything the mixer does**, over
+HTTP. Turn it on under **Local API** in the overflow menu; the app generates a
+key and shows the address.
+
+```bash
+KEY=<copied from the app>            # adb forward tcp:8799 tcp:8799, from a laptop
+curl -s -H "X-API-Key: $KEY" 127.0.0.1:8799/api/docs           # the full reference
+curl -s -H "X-API-Key: $KEY" 127.0.0.1:8799/api/mixer
+curl -s -H "X-API-Key: $KEY" -X PATCH 127.0.0.1:8799/api/apps/com.spotify.music -d '{"gain":40}'
+curl -s -H "X-API-Key: $KEY" -X POST  127.0.0.1:8799/api/apps/com.spotify.music/reset
+curl -s -H "X-API-Key: $KEY" -X PATCH 127.0.0.1:8799/api/settings -d '{"palette":"Zoro"}'
+```
+
+| | |
+|---|---|
+| **Faders** | every app's gain and mute, add to and remove from the mixer, reset one or all, and the app picker's list |
+| **Streams** | media, ring, alarm, notification and system volume |
+| **Settings** | theme, fader ceiling, and the volume-warning suppression (still applied at the next boot) |
+| **Status** | mode (privileged / idle / limited), what is routed, and the full Diagnostics report |
+
+- **Off until you turn it on**, in its own foreground service with a
+  notification naming the address and a Stop button. It comes back after a
+  reboot only if it was on.
+- **Loopback only** — `127.0.0.1`, no LAN option. Agents reach it through
+  PhoneAPI, which pairs them and holds each one's permissions; this app keeps
+  none of that.
+- **The key is generated, never typed**, compared in constant time, and
+  replaceable in one tap. Everything but `GET /api/health` needs it.
+- **What a finger does, the API does the same way.** A fader moved over the API
+  moves on screen while you watch. A change that needs the engine started from
+  idle answers `"engine": "applied"`, or `"deferred"` if Android refused to start
+  it from the background — then it applies when the app is next opened.
+- It cannot grant playback detection or flash the module: both need a person.
 
 ### Suppressing the system volume warning
 
@@ -174,11 +227,20 @@ app/src/main/java/com/volumeperapp/app/
     RoutingEngine.java       decides *when* to divert; owns the routed/pumping sets
     PlaybackWatcher.java     who is playing, from two sources that each miss things
     MixerService.java        foreground service holding the engine
+  api/                       the local API — off unless switched on
+    ApiRouter.java           which path means what; no Android types, unit-tested
+    ApiBackend.java          everything the API can do, as an interface
+    VolumePerAppBackend.java ...done through the same store and engine as the UI
+    Http.java, ApiServer.java  just enough HTTP; one request per connection
+    ApiService.java          the foreground service that keeps it listening
+    ApiDocs.java             the reference served at GET /api/docs
   data/                      VolumeStore (prefs), AppRepository, AppEntry
-  ui/                        MixerActivity, AppPickerActivity, DiagnosticsActivity
+  ui/                        MixerActivity, AppPickerActivity, DiagnosticsActivity,
+                             Themes (+ Palettes, generated)
 magisk/                      the Magisk module tree
 tools/probe/                 pins the hidden API against a real device
 tools/tone/                  test fixture: an app that only emits a known tone
+tools/gen-palettes.py        writes the house palettes as themes from palettes.toml
 docs/hidden-api-api35.txt    what that probe found on Android 15
 ```
 
@@ -186,6 +248,7 @@ docs/hidden-api-api35.txt    what that probe found on Android 15
 
 ```sh
 ./gradlew :app:assembleRelease          # unsigned APK
+./gradlew :app:testDebugUnitTest        # the API's router, on the JVM
 tools/build-magisk.sh <signed.apk>      # packages the module zip into dist/
 ```
 

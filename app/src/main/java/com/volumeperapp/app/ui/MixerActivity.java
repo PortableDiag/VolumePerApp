@@ -17,6 +17,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.volumeperapp.app.R;
+import com.volumeperapp.app.api.ApiService;
+import com.volumeperapp.app.api.ApiSettingsDialog;
 import com.volumeperapp.app.audio.MixerService;
 import com.volumeperapp.app.audio.PlaybackWatcher;
 import com.volumeperapp.app.audio.RoutingEngine;
@@ -47,6 +49,8 @@ public final class MixerActivity extends AppCompatActivity
     private static final int REQ_PICK = 1;
 
     private VolumeStore store;
+    private int appliedTheme;
+    private boolean draggingWrite;
     private AppRepository apps;
     private RoutingEngine engine;
     private AudioManager audioManager;
@@ -65,7 +69,8 @@ public final class MixerActivity extends AppCompatActivity
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         store = new VolumeStore(this);
-        setTheme(themeFor(store.theme()));
+        Themes.apply(this, store);
+        appliedTheme = Themes.current(store).style;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mixer);
 
@@ -75,7 +80,6 @@ public final class MixerActivity extends AppCompatActivity
 
         toolbar = findViewById(R.id.toolbar);
         toolbar.setOnMenuItemClickListener(this::onMenu);
-        updateThemeMenuTitle();
         updateSafeVolumeMenu();
 
         adapter = new MixerAdapter(this, this);
@@ -89,24 +93,36 @@ public final class MixerActivity extends AppCompatActivity
                 startActivityForResult(new Intent(this, AppPickerActivity.class), REQ_PICK));
 
         requestNotificationPermissionIfNeeded();
+        // The API comes back with the app if it was on and something killed it.
+        ApiService.startIfEnabled(this);
     }
 
-    static int themeFor(String name) {
-        return "terminal".equals(name)
-                ? R.style.Theme_VolumePerApp_Terminal
-                : R.style.Theme_VolumePerApp;
-    }
-
-    private void updateThemeMenuTitle() {
-        boolean terminal = "terminal".equals(store.theme());
-        toolbar.getMenu().findItem(R.id.action_theme)
-                .setTitle(terminal ? R.string.theme_ocean : R.string.theme_terminal);
-    }
+    /**
+     * The local API writes the same settings this screen does, so the screen
+     * follows the store rather than its own taps: a fader an agent moves is a
+     * fader that moves here while you watch. Held in a field because the
+     * platform keeps only a weak reference to it.
+     */
+    private final VolumeStore.Listener storeListener = key -> runOnUiThread(() -> {
+        if (draggingWrite || isFinishing() || isDestroyed()) return;
+        if (VolumeStore.KEY_THEME.equals(key)) {
+            recreate();
+        } else {
+            updateSafeVolumeMenu();
+            rebuild();
+        }
+    });
 
     @Override
     protected void onResume() {
         super.onResume();
         engine.addStateListener(this);
+        store.addListener(storeListener);
+        // A palette chosen over the API while this screen was in the background.
+        if (Themes.current(store).style != appliedTheme) {
+            recreate();
+            return;
+        }
         // Playback detection first, and independently of routing: an app has to
         // be visible in "Playing now" before there is any reason to adjust it.
         engine.setUiVisible(true);
@@ -122,6 +138,7 @@ public final class MixerActivity extends AppCompatActivity
     @Override
     protected void onPause() {
         engine.removeStateListener(this);
+        store.removeListener(storeListener);
         // Leaves the callback registered only if routing still needs it.
         engine.setUiVisible(false);
         super.onPause();
@@ -260,8 +277,15 @@ public final class MixerActivity extends AppCompatActivity
 
     @Override
     public void onGainChanged(AppEntry app, int percent) {
-        store.setGainPercent(app.packageName, percent);
-        store.pin(app.packageName);
+        // Mid-drag: the store listener must not rebuild the list under the
+        // finger. The listener runs synchronously for a write on this thread.
+        draggingWrite = true;
+        try {
+            store.setGainPercent(app.packageName, percent);
+            store.pin(app.packageName);
+        } finally {
+            draggingWrite = false;
+        }
         pushGain(app.packageName);
     }
 
@@ -315,20 +339,8 @@ public final class MixerActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * A fader move must reach the engine whether or not the service is already
-     * up: crossing away from 100 % is exactly what starts it.
-     */
     private void pushGain(String pkg) {
-        if (store.needsRouting(pkg) || !store.adjustedPackages().isEmpty()) {
-            Intent i = new Intent(this, MixerService.class)
-                    .setAction(MixerService.ACTION_GAIN)
-                    .putExtra(MixerService.EXTRA_PACKAGE, pkg);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(i);
-            else startService(i);
-        } else {
-            MixerService.sync(this);
-        }
+        MixerService.pushGain(this, pkg);
     }
 
     // ------------------------------------------------------------------- menu
@@ -336,8 +348,7 @@ public final class MixerActivity extends AppCompatActivity
     private boolean onMenu(android.view.MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_theme) {
-            store.setTheme("terminal".equals(store.theme()) ? "ocean" : "terminal");
-            recreate();
+            showThemeDialog();
             return true;
         } else if (id == R.id.action_diagnostics) {
             startActivity(new Intent(this, DiagnosticsActivity.class));
@@ -350,6 +361,9 @@ public final class MixerActivity extends AppCompatActivity
             return true;
         } else if (id == R.id.action_safe_volume) {
             onSafeVolumeToggled(item.isChecked());
+            return true;
+        } else if (id == R.id.action_api) {
+            ApiSettingsDialog.show(this);
             return true;
         } else if (id == R.id.action_reset) {
             store.resetAll();
@@ -429,6 +443,25 @@ public final class MixerActivity extends AppCompatActivity
                     store.setMaxGainPercent(options[which]);
                     d.dismiss();
                     rebuild();
+                })
+                .show();
+    }
+
+    private void showThemeDialog() {
+        List<Palettes.Palette> all = Palettes.ALL;
+        String[] labels = new String[all.size()];
+        int current = 0;
+        String now = Themes.current(store).name;
+        for (int i = 0; i < all.size(); i++) {
+            labels[i] = all.get(i).label;
+            if (all.get(i).name.equals(now)) current = i;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.theme)
+                .setSingleChoiceItems(labels, current, (d, which) -> {
+                    d.dismiss();
+                    // The store listener recreates the screen; saved by name.
+                    store.setTheme(all.get(which).name);
                 })
                 .show();
     }

@@ -6,8 +6,7 @@
     <string name="add_app">Add app</string>
     <string name="diagnostics">Diagnostics</string>
     <string name="reset_all">Reset every fader</string>
-    <string name="theme_ocean">Ocean theme</string>
-    <string name="theme_terminal">Terminal theme</string>
+    <string name="theme">Theme</string>
     <string name="grant_session_access">Grant playback detection</string>
 
     <string name="section_playing">Playing now</string>
@@ -67,4 +66,23 @@
     <string name="safe_volume_on">Suppressed after you restart the phone</string>
     <string name="safe_volume_off">The system warning returns after you restart the phone</string>
     <string name="safe_volume_failed">Could not record that — the setting is unchanged</string>
+
+    <string name="api">Local API</string>
+    <string name="api_enable">Serve the local API</string>
+    <string name="api_running">Listening on %1$s</string>
+    <string name="api_stopped">Off. Nothing is listening.</string>
+    <string name="api_failed">Could not listen on port %1$d: %2$s</string>
+    <string name="api_key_label">Key</string>
+    <string name="api_key_none">None yet. Turning the API on makes one.</string>
+    <string name="api_copy">Copy key</string>
+    <string name="api_copied">Key copied</string>
+    <string name="api_regenerate">New key</string>
+    <string name="api_regenerated">New key made. The old one no longer works.</string>
+    <string name="api_port">Port</string>
+    <string name="api_port_invalid">The port must be a number from 1024 to 65535</string>
+    <string name="api_explain">Lets a script or an agent on this phone do anything the mixer does: move faders, mute, reset, and change settings. It listens on 127.0.0.1 only and needs the key. GET /api/docs describes every route.</string>
+    <string name="api_channel">Local API</string>
+    <string name="api_notification_title">Local API is on</string>
+    <string name="api_notification_text">Listening on %1$s</string>
+    <string name="api_stop">Stop</string>
 </resources>

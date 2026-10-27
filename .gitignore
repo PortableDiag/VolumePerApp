@@ -22,3 +22,8 @@ magisk/system/priv-app/VolumePerApp/*.apk
 .idea/
 *.iml
 .DS_Store
+
+# ProjectForge's record that this repo follows the house palettes. It names a
+# path on the build machine, so it stays local; tools/gen-palettes.py is what
+# the repo carries.
+palettes.lock

@@ -24,7 +24,7 @@ public final class VolumeStore {
     private static final String KEY_GAIN = "gain.";
     private static final String KEY_MUTED = "muted.";
     private static final String KEY_PINNED = "pinned";
-    private static final String KEY_THEME = "theme";
+    public static final String KEY_THEME = "theme";
     private static final String KEY_ENGINE = "engine_enabled";
     private static final String KEY_MAX = "max_gain_percent";
 
@@ -32,6 +32,14 @@ public final class VolumeStore {
     public static final int DEFAULT_PERCENT = 100;
 
     private final SharedPreferences prefs;
+
+    /** Told the key that changed, whoever changed it — the UI or the local API. */
+    public interface Listener {
+        void onStoreChanged(String key);
+    }
+
+    private static final Map<Listener, SharedPreferences.OnSharedPreferenceChangeListener>
+            LISTENERS = new java.util.HashMap<>();
 
     public VolumeStore(Context context) {
         this.prefs = context.getApplicationContext()
@@ -63,6 +71,25 @@ public final class VolumeStore {
     /** True when this app needs the routing engine at all. */
     public boolean needsRouting(String pkg) {
         return isMuted(pkg) || gainPercent(pkg) != DEFAULT_PERCENT;
+    }
+
+    /** The caller must hold the listener strongly; the platform does not. */
+    public void addListener(Listener l) {
+        SharedPreferences.OnSharedPreferenceChangeListener wrapped =
+                (sp, key) -> l.onStoreChanged(key);
+        synchronized (LISTENERS) {
+            if (LISTENERS.containsKey(l)) return;
+            LISTENERS.put(l, wrapped);
+        }
+        prefs.registerOnSharedPreferenceChangeListener(wrapped);
+    }
+
+    public void removeListener(Listener l) {
+        SharedPreferences.OnSharedPreferenceChangeListener wrapped;
+        synchronized (LISTENERS) {
+            wrapped = LISTENERS.remove(l);
+        }
+        if (wrapped != null) prefs.unregisterOnSharedPreferenceChangeListener(wrapped);
     }
 
     // ---- the user's chosen set of apps (the mixer's channel strips) ---------
@@ -113,9 +140,9 @@ public final class VolumeStore {
 
     // ---- app-wide settings -------------------------------------------------
 
-    /** "ocean" or "terminal". */
+    /** A house palette, by name — see {@code ui.Themes}, which resolves it. */
     public String theme() {
-        return prefs.getString(KEY_THEME, "ocean");
+        return prefs.getString(KEY_THEME, "Ocean");
     }
 
     public void setTheme(String theme) {

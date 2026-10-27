@@ -61,19 +61,67 @@ public final class MixerService extends Service {
         return sharedEngine;
     }
 
-    /** Starts, stops or nudges the service to match the current settings. */
-    public static void sync(Context context) {
+    /**
+     * Starts, stops or nudges the service to match the current settings.
+     *
+     * @return false only when the engine is wanted and Android refused to start
+     *     the service for it — see {@link #start}.
+     */
+    public static boolean sync(Context context) {
         VolumeStore store = new VolumeStore(context);
         boolean wanted = store.engineEnabled() && !store.adjustedPackages().isEmpty();
-        Intent i = new Intent(context, MixerService.class).setAction(ACTION_SYNC);
         if (wanted) {
+            return start(context, new Intent(context, MixerService.class).setAction(ACTION_SYNC),
+                    eng -> eng.syncRouting());
+        }
+        context.stopService(new Intent(context, MixerService.class));
+        return true;
+    }
+
+    /**
+     * A fader move must reach the engine whether or not the service is already
+     * up: crossing away from 100 % is exactly what starts it.
+     *
+     * @return whether the engine has the new gain; false when it was idle and
+     *     Android would not let it start from where this was called.
+     */
+    public static boolean pushGain(Context context, String pkg) {
+        VolumeStore store = new VolumeStore(context);
+        if (store.needsRouting(pkg) || !store.adjustedPackages().isEmpty()) {
+            Intent i = new Intent(context, MixerService.class)
+                    .setAction(ACTION_GAIN)
+                    .putExtra(EXTRA_PACKAGE, pkg);
+            return start(context, i, eng -> eng.onGainChanged(pkg));
+        }
+        return sync(context);
+    }
+
+    private interface EngineCall {
+        void run(RoutingEngine engine);
+    }
+
+    /**
+     * Android 12 refuses a foreground-service start from the background, which
+     * is where a local-API request comes from. When the engine is already
+     * running its service is already foreground, so the change is handed to
+     * the engine directly instead; only an idle engine has to wait for the app
+     * to be opened.
+     */
+    private static boolean start(Context context, Intent intent, EngineCall fallback) {
+        try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(i);
+                context.startForegroundService(intent);
             } else {
-                context.startService(i);
+                context.startService(intent);
             }
-        } else {
-            context.stopService(new Intent(context, MixerService.class));
+            return true;
+        } catch (IllegalStateException e) {
+            // ForegroundServiceStartNotAllowedException is an IllegalStateException.
+            RoutingEngine eng = engine(context);
+            Log.w(TAG, "service start refused; engine running=" + eng.isRunning(), e);
+            if (!eng.isRunning()) return false;
+            fallback.run(eng);
+            return true;
         }
     }
 

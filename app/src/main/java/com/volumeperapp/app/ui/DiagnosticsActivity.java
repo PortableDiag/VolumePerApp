@@ -37,7 +37,7 @@ public final class DiagnosticsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         VolumeStore store = new VolumeStore(this);
-        setTheme(MixerActivity.themeFor(store.theme()));
+        Themes.apply(this, store);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_diagnostics);
 
@@ -57,10 +57,14 @@ public final class DiagnosticsActivity extends AppCompatActivity {
     }
 
     private void refresh() {
-        report.setText(build());
+        report.setText(report(this));
     }
 
-    private String build() {
+    /**
+     * The whole report, re-probed live. Static because the local API serves the
+     * same text at {@code GET /api/diagnostics}.
+     */
+    public static String report(Context ctx) {
         StringBuilder sb = new StringBuilder();
         sb.append("VolumePerApp ").append(BuildConfig.VERSION_NAME)
           .append(" (").append(BuildConfig.VERSION_CODE).append(")\n");
@@ -71,35 +75,35 @@ public final class DiagnosticsActivity extends AppCompatActivity {
 
         sb.append("== INSTALL ==\n");
         sb.append("uid: ").append(android.os.Process.myUid()).append('\n');
-        sb.append("privileged system app: ").append(isPrivilegedInstall() ? "yes" : "no").append('\n');
-        sb.append("source dir: ").append(getApplicationInfo().sourceDir).append('\n');
-        sb.append("MODIFY_AUDIO_ROUTING: ").append(permState(
+        sb.append("privileged system app: ").append(isPrivilegedInstall(ctx) ? "yes" : "no").append('\n');
+        sb.append("source dir: ").append(ctx.getApplicationInfo().sourceDir).append('\n');
+        sb.append("MODIFY_AUDIO_ROUTING: ").append(permState(ctx,
                 "android.permission.MODIFY_AUDIO_ROUTING")).append('\n');
-        sb.append("CAPTURE_MEDIA_OUTPUT: ").append(permState(
+        sb.append("CAPTURE_MEDIA_OUTPUT: ").append(permState(ctx,
                 "android.permission.CAPTURE_MEDIA_OUTPUT")).append('\n');
-        sb.append("CAPTURE_AUDIO_OUTPUT: ").append(permState(
+        sb.append("CAPTURE_AUDIO_OUTPUT: ").append(permState(ctx,
                 "android.permission.CAPTURE_AUDIO_OUTPUT")).append('\n');
         sb.append('\n');
 
         sb.append("== HIDDEN API ==\n");
-        AudioPolicyBridge.Capability cap = AudioPolicyBridge.probe(this);
+        AudioPolicyBridge.Capability cap = AudioPolicyBridge.probe(ctx);
         sb.append(cap.detail);
         sb.append('\n');
 
         sb.append("== ENGINE ==\n");
-        RoutingEngine engine = MixerService.engine(this);
+        RoutingEngine engine = MixerService.engine(ctx);
         sb.append(engine.report());
         sb.append('\n');
 
         sb.append("== HEARING SAFETY ==\n");
         sb.append("requested (flag file): ")
-          .append(SafeVolume.isRequested(this) ? "yes" : "no").append('\n');
+          .append(SafeVolume.isRequested(ctx) ? "yes" : "no").append('\n');
         String prop = SafeVolume.property();
         sb.append(SafeVolume.PROPERTY).append(": ")
           .append(prop == null || prop.isEmpty() ? "unset" : prop).append('\n');
         sb.append("platform state: ")
-          .append(SafeVolume.stateName(SafeVolume.state(this))).append('\n');
-        sb.append(SafeVolume.status(this)).append('\n');
+          .append(SafeVolume.stateName(SafeVolume.state(ctx))).append('\n');
+        sb.append(SafeVolume.status(ctx)).append('\n');
         sb.append('\n');
 
         sb.append("== VERDICT ==\n");
@@ -111,7 +115,7 @@ public final class DiagnosticsActivity extends AppCompatActivity {
         } else if (!cap.recipeComplete) {
             sb.append("The audiopolicy classes exist but the call chain has moved on this\n")
               .append("Android version. The engine needs updating against this build.\n");
-        } else if (!isPrivilegedInstall()) {
+        } else if (!isPrivilegedInstall(ctx)) {
             sb.append("Everything the engine needs is present, but this APK is not installed\n")
               .append("as a privileged system app, so MODIFY_AUDIO_ROUTING is not granted.\n")
               .append("Flash the Magisk module (magisk/ in the repo) and reboot.\n");
@@ -123,15 +127,15 @@ public final class DiagnosticsActivity extends AppCompatActivity {
         return sb.toString();
     }
 
-    private boolean isPrivilegedInstall() {
-        String dir = getApplicationInfo().sourceDir;
+    private static boolean isPrivilegedInstall(Context ctx) {
+        String dir = ctx.getApplicationInfo().sourceDir;
         return dir != null && (dir.startsWith("/system/priv-app")
                 || dir.startsWith("/system_ext/priv-app")
                 || dir.startsWith("/product/priv-app"));
     }
 
-    private String permState(String permission) {
-        int state = checkSelfPermission(permission);
+    private static String permState(Context ctx, String permission) {
+        int state = ctx.checkSelfPermission(permission);
         return state == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "denied";
     }
 }
