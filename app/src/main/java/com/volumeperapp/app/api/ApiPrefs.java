@@ -27,8 +27,8 @@ public final class ApiPrefs {
     private static final String KEY_KEY = "key";
     private static final String KEY_PORT = "port";
 
-    /** Clear of the other in-house apps' APIs (Lull 8787 … ThereminX 8796). */
-    public static final int DEFAULT_PORT = 8799;
+    /** Clear of the other in-house apps' APIs (Lull 8787 … ThereminX 8796, GhostUser 8799). */
+    public static final int DEFAULT_PORT = 8798;
     public static final int MIN_PORT = 1024;
     public static final int MAX_PORT = 65535;
 

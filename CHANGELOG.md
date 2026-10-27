@@ -2,6 +2,15 @@
 
 All notable changes to VolumePerApp.
 
+## [0.4.1] — 2026-10-27
+
+### Changed
+
+- **The local API's default port is now 8798**, not 8799: GhostUser also
+  defaults to 8799, and the two would refuse each other. A port typed into
+  the Local API dialog is kept; only the default moved. From a laptop that is
+  now `adb forward tcp:8798 tcp:8798`.
+
 ## [0.4.0] — 2026-10-27
 
 ### Added

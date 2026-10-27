@@ -45,7 +45,7 @@ already do on the mixer screen — the API is a second pair of hands, not a seco
 features.
 
 - **Base URL:** `http://127.0.0.1:<port>/api` — the port is shown in the app under
-  **Local API** (default 8799). Loopback only; from a laptop, `adb forward tcp:8799 tcp:8799`.
+  **Local API** (default 8798). Loopback only; from a laptop, `adb forward tcp:8798 tcp:8798`.
 - **Off by default.** It runs only while it is switched on in the app.
 - **Auth:** every route but `GET /api/health` needs the key, as `X-API-Key: <key>` or
   `Authorization: Bearer <key>`. A new key can be issued in the app at any time and the old

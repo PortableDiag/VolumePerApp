@@ -88,12 +88,12 @@ HTTP. Turn it on under **Local API** in the overflow menu; the app generates a
 key and shows the address.
 
 ```bash
-KEY=<copied from the app>            # adb forward tcp:8799 tcp:8799, from a laptop
-curl -s -H "X-API-Key: $KEY" 127.0.0.1:8799/api/docs           # the full reference
-curl -s -H "X-API-Key: $KEY" 127.0.0.1:8799/api/mixer
-curl -s -H "X-API-Key: $KEY" -X PATCH 127.0.0.1:8799/api/apps/com.spotify.music -d '{"gain":40}'
-curl -s -H "X-API-Key: $KEY" -X POST  127.0.0.1:8799/api/apps/com.spotify.music/reset
-curl -s -H "X-API-Key: $KEY" -X PATCH 127.0.0.1:8799/api/settings -d '{"palette":"Zoro"}'
+KEY=<copied from the app>            # adb forward tcp:8798 tcp:8798, from a laptop
+curl -s -H "X-API-Key: $KEY" 127.0.0.1:8798/api/docs           # the full reference
+curl -s -H "X-API-Key: $KEY" 127.0.0.1:8798/api/mixer
+curl -s -H "X-API-Key: $KEY" -X PATCH 127.0.0.1:8798/api/apps/com.spotify.music -d '{"gain":40}'
+curl -s -H "X-API-Key: $KEY" -X POST  127.0.0.1:8798/api/apps/com.spotify.music/reset
+curl -s -H "X-API-Key: $KEY" -X PATCH 127.0.0.1:8798/api/settings -d '{"palette":"Zoro"}'
 ```
 
 | | |
