@@ -50,6 +50,10 @@ features.
 - **Auth:** every route but `GET /api/health` needs the key, as `X-API-Key: <key>` or
   `Authorization: Bearer <key>`. A new key can be issued in the app at any time and the old
   one stops working at once.
+- **PhoneAPI** gets its own key through its key request, never yours. The owner chooses
+  what it may do: see (every GET) and/or change (everything else); the rest is a 403. A
+  request carrying `X-PhoneAPI-Challenge` is answered with `X-PhoneAPI-Proof` once PhoneAPI
+  holds a proof key.
 - **Errors** are JSON: `{"error": "...", "hint": "..."}` with a 4xx for a request that is
   wrong and a 5xx for the app's own failure. Never a silent 200.
 - **Writes take JSON bodies.** An unknown field is ignored; a known one with a bad value is

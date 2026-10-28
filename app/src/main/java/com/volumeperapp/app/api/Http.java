@@ -78,6 +78,7 @@ public final class Http {
             REASONS.put(204, "No Content");
             REASONS.put(400, "Bad Request");
             REASONS.put(401, "Unauthorized");
+            REASONS.put(403, "Forbidden");
             REASONS.put(404, "Not Found");
             REASONS.put(405, "Method Not Allowed");
             REASONS.put(409, "Conflict");
@@ -102,6 +103,13 @@ public final class Http {
         public String reason() {
             String r = REASONS.get(status);
             return r != null ? r : "OK";
+        }
+
+        /** The same response with one more header: the proof goes on after routing. */
+        public Response withHeader(String name, String value) {
+            Map<String, String> headers = new LinkedHashMap<>(extraHeaders);
+            headers.put(name, value);
+            return new Response(status, contentType, body, headers);
         }
 
         public String text() {

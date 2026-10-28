@@ -2,6 +2,21 @@
 
 All notable changes to VolumePerApp.
 
+## [0.4.2] — 2026-10-27
+
+### Added
+
+- **PhoneAPI can ask for a key** (PhoneAPI's provider contract §2–§3). PhoneAPI
+  opens VolumePerApp's own "Let PhoneAPI use VolumePerApp?" screen; only
+  PhoneAPI's release build gets that far. Two switches, both off: **See** (every
+  GET) and **Change** (everything else); what is off answers 403. Allow mints a
+  key for PhoneAPI alone — separate from yours, and replacing any earlier one —
+  plus a proof key, and switches the local API on. Once PhoneAPI holds a proof
+  key, every answer to a request carrying `X-PhoneAPI-Challenge` carries
+  `X-PhoneAPI-Proof`, so PhoneAPI can tell VolumePerApp from anything else on the
+  port. PhoneAPI's key is dropped when PhoneAPI is uninstalled or re-signed.
+  The audio engine did not change.
+
 ## [0.4.1] — 2026-10-27
 
 ### Changed

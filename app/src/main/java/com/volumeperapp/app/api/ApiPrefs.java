@@ -40,7 +40,8 @@ public final class ApiPrefs {
     private ApiPrefs() {
     }
 
-    private static SharedPreferences sp(Context c) {
+    /** Package-private: PhoneAPI's key ({@link PhoneApiAccess}) lives in the same file. */
+    static SharedPreferences sp(Context c) {
         return c.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 

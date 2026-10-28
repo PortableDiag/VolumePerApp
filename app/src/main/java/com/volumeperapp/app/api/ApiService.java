@@ -82,7 +82,10 @@ public final class ApiService extends Service {
         if (server != null && server.isRunning()) return START_STICKY;
 
         Context app = getApplicationContext();
-        ApiRouter router = new ApiRouter(new VolumePerAppBackend(app), () -> ApiPrefs.key(app));
+        // PhoneAPI may have been uninstalled or re-signed while nothing was listening.
+        PhoneApiAccess.revokeIfGone(app);
+        ApiRouter router = new ApiRouter(new VolumePerAppBackend(app), () -> ApiPrefs.key(app),
+                () -> PhoneApiAccess.grant(app));
         ApiServer api = new ApiServer(router, ApiPrefs.BIND_ADDRESS, port);
         try {
             api.start();

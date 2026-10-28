@@ -67,6 +67,20 @@
             android:exported="false"
             android:parentActivityName=".ui.MixerActivity" />
 
+        <!--
+            PhoneAPI asks for a key (its provider contract §3). The activity
+            checks the caller is PhoneAPI's release build before it shows anything.
+        -->
+        <activity
+            android:name=".ui.PhoneApiGrantActivity"
+            android:exported="true"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="com.phoneapi.action.GRANT_KEY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".audio.MixerService"
             android:exported="false"
@@ -101,6 +115,18 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- PhoneAPI uninstalled or re-signed: its key goes with it. -->
+        <receiver
+            android:name=".api.PhoneApiGoneReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
+                <action android:name="android.intent.action.PACKAGE_ADDED" />
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <data android:scheme="package" />
             </intent-filter>
         </receiver>
     </application>

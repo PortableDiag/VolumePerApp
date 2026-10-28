@@ -41,22 +41,58 @@ public final class ApiRouter {
 
     private final ApiBackend backend;
     private final Supplier<String> expectedKey;
+    private final Supplier<PhoneApi.Grant> phoneApi;
+
+    /** Who a request's key belongs to: the owner's key, or the one PhoneAPI was granted. */
+    private enum Caller { NOBODY, OWNER, PHONEAPI }
 
     public ApiRouter(ApiBackend backend, Supplier<String> expectedKey) {
-        this.backend = backend;
-        this.expectedKey = expectedKey;
+        this(backend, expectedKey, () -> null);
     }
 
+    public ApiRouter(ApiBackend backend, Supplier<String> expectedKey,
+                     Supplier<PhoneApi.Grant> phoneApi) {
+        this.backend = backend;
+        this.expectedKey = expectedKey;
+        this.phoneApi = phoneApi;
+    }
+
+    /**
+     * Every answer — health, 401s, 404s and errors too — carries PhoneAPI's
+     * proof once it holds a proof key (provider contract §2), so PhoneAPI can
+     * tell VolumePerApp from whatever else might have bound the port.
+     */
     public Http.Response handle(Http.Request r) {
+        Http.Response out = route(r);
+        String challenge = PhoneApi.usableChallenge(r.header(PhoneApi.HEADER_CHALLENGE));
+        PhoneApi.Grant g = challenge == null ? null : phoneApi.get();
+        if (g == null) return out;
+        return out.withHeader(PhoneApi.HEADER_PROOF, PhoneApi.proof(g.proofKey, challenge));
+    }
+
+    private Http.Response route(Http.Request r) {
         try {
             if ("OPTIONS".equals(r.method)) return Http.Response.noContent();
             if (!r.path.equals("/api") && !r.path.startsWith("/api/")) {
                 return Http.Response.error(404, "not an API path",
                         "everything this server answers lives under /api — GET /api/docs lists it");
             }
-            if (!r.path.equals(OPEN_PATH) && !authorised(r)) {
-                return Http.Response.error(401, "missing or invalid API key",
-                        "send it as the X-API-Key header, or Authorization: Bearer <key>");
+            if (!r.path.equals(OPEN_PATH)) {
+                Caller who = caller(r);
+                if (who == Caller.NOBODY) {
+                    return Http.Response.error(401, "missing or invalid API key",
+                            "send it as the X-API-Key header, or Authorization: Bearer <key>");
+                }
+                if (who == Caller.PHONEAPI) {
+                    PhoneApi.Grant g = phoneApi.get();
+                    boolean reading = "GET".equals(r.method);
+                    if (g == null || (reading ? !g.see : !g.change)) {
+                        return Http.Response.error(403, "PhoneAPI's key may not "
+                                        + (reading ? "see" : "change") + " anything in VolumePerApp",
+                                "the owner chose what it may do; Connect in PhoneAPI "
+                                        + "(Providers, VolumePerApp) asks again");
+                    }
+                }
             }
             return dispatch(r);
         } catch (ApiException e) {
@@ -71,15 +107,21 @@ public final class ApiRouter {
      * Constant-time: the timing of a string compare leaks how much of a key is
      * right, and a local socket is where an attacker can afford the tries.
      */
-    private boolean authorised(Http.Request r) {
-        String expected = expectedKey.get();
-        if (expected == null || expected.isEmpty()) return false;
+    private Caller caller(Http.Request r) {
         String offered = r.header("x-api-key");
         if (offered == null) {
             String auth = r.header("authorization");
-            if (auth == null) return false;
+            if (auth == null) return Caller.NOBODY;
             offered = auth.replaceFirst("^[Bb]earer\\s+", "").trim();
         }
+        if (same(offered, expectedKey.get())) return Caller.OWNER;
+        PhoneApi.Grant g = phoneApi.get();
+        if (g != null && same(offered, g.key)) return Caller.PHONEAPI;
+        return Caller.NOBODY;
+    }
+
+    private static boolean same(String offered, String expected) {
+        if (expected == null || expected.isEmpty()) return false;
         byte[] a = offered.getBytes(StandardCharsets.UTF_8);
         byte[] b = expected.getBytes(StandardCharsets.UTF_8);
         if (a.length != b.length) return false;

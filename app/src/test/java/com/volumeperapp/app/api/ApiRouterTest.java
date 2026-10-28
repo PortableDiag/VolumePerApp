@@ -182,4 +182,63 @@ public final class ApiRouterTest {
         assertEquals("a b", r.query.get("q"));
         assertEquals("x", r.header("X-API-Key"));
     }
+
+    // ------------------------------------------------------------- PhoneAPI
+
+    private static final byte[] PROOF = new byte[32];
+
+    private static Http.Response asPhoneApi(ApiRouter r, String method, String path, String key,
+                                            String challenge) throws Exception {
+        StringBuilder raw = new StringBuilder(method + " " + path + " HTTP/1.1\r\n");
+        if (key != null) raw.append("X-API-Key: ").append(key).append("\r\n");
+        if (challenge != null) raw.append("X-PhoneAPI-Challenge: ").append(challenge).append("\r\n");
+        raw.append("Content-Length: 2\r\n\r\n{}");
+        return r.handle(Http.parse(raw.toString()));
+    }
+
+    @Test
+    public void phoneApiKeyIsHeldToWhatTheOwnerSwitchedOn() throws Exception {
+        ApiRouter seeOnly = new ApiRouter(backend, () -> KEY,
+                () -> new PhoneApi.Grant("pk", PROOF, true, false));
+        assertEquals(200, asPhoneApi(seeOnly, "GET", "/api/mixer", "pk", null).status);
+        assertEquals(403, asPhoneApi(seeOnly, "POST", "/api/reset", "pk", null).status);
+
+        ApiRouter changeOnly = new ApiRouter(backend, () -> KEY,
+                () -> new PhoneApi.Grant("pk", PROOF, false, true));
+        assertEquals(403, asPhoneApi(changeOnly, "GET", "/api/mixer", "pk", null).status);
+        assertEquals(200, asPhoneApi(changeOnly, "POST", "/api/reset", "pk", null).status);
+        // The owner's key is never limited by PhoneAPI's switches.
+        assertEquals(200, asPhoneApi(changeOnly, "GET", "/api/mixer", KEY, null).status);
+    }
+
+    @Test
+    public void everyAnswerCarriesTheProofOnceThereIsAProofKey() throws Exception {
+        ApiRouter granted = new ApiRouter(backend, () -> KEY,
+                () -> new PhoneApi.Grant("pk", PROOF, true, true));
+        String want = PhoneApi.proof(PROOF, "abc123");
+        for (Http.Response r : new Http.Response[]{
+                asPhoneApi(granted, "GET", "/api/health", null, "abc123"),
+                asPhoneApi(granted, "GET", "/api/mixer", null, "abc123"),
+                asPhoneApi(granted, "GET", "/nope", null, "abc123"),
+                asPhoneApi(granted, "GET", "/api/nope", "pk", "abc123")}) {
+            assertEquals(want, r.extraHeaders.get("X-PhoneAPI-Proof"));
+        }
+        assertFalse(asPhoneApi(granted, "GET", "/api/health", null, null)
+                .extraHeaders.containsKey("X-PhoneAPI-Proof"));
+        assertFalse(asPhoneApi(router, "GET", "/api/health", null, "abc123")
+                .extraHeaders.containsKey("X-PhoneAPI-Proof"));
+    }
+
+    @Test
+    public void proofIsBase64UrlHmacAndThePinIsPhoneApis() throws Exception {
+        // RFC 4231 test case 2: key "Jefe", data "what do ya want for nothing?".
+        assertEquals("W9zBRr9gdU5qBCQmCJV1x1oAPwidJzmDnexYuWTsOEM",
+                PhoneApi.proof("Jefe".getBytes("US-ASCII"), "what do ya want for nothing?"));
+        assertTrue(PhoneApi.callerTrusted("com.phoneapi.app", java.util.Collections.singletonList(
+                "ad86a704863986f3a4ed106600f1ecc219ee318268d484bb54e9079ce3b8e002")));
+        assertFalse(PhoneApi.callerTrusted("com.evil.app", java.util.Collections.singletonList(
+                "ad86a704863986f3a4ed106600f1ecc219ee318268d484bb54e9079ce3b8e002")));
+        assertFalse(PhoneApi.callerTrusted("com.phoneapi.app",
+                java.util.Collections.singletonList("00")));
+    }
 }
