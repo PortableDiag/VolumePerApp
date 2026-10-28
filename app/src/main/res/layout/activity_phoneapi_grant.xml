@@ -4,13 +4,17 @@
     android:layout_height="match_parent"
     android:background="?android:attr/colorBackground"
     android:fitsSystemWindows="true"
-    android:orientation="vertical"
-    android:padding="20dp">
+    android:orientation="vertical">
+
+    <!-- fitsSystemWindows replaces the root's own padding with the insets, so the
+         side margin lives on the children. -->
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="20dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -61,7 +65,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:gravity="end">
+        android:gravity="end"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="20dp">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/deny"

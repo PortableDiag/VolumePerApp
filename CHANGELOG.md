@@ -2,6 +2,13 @@
 
 All notable changes to VolumePerApp.
 
+## [0.4.4] — 2026-10-27
+
+### Fixed
+
+- **PhoneAPI's key screen** has a 24 dp side margin; its text and switches no
+  longer touch the screen's edge.
+
 ## [0.4.3] — 2026-10-27
 
 ### Changed
