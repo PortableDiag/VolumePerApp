@@ -7,7 +7,7 @@ import android.content.Intent;
 import com.volumeperapp.app.api.ApiService;
 
 /**
- * Restores the mixer after a reboot.
+ * Restores the mixer after a reboot or an update of this app.
  *
  * <p>A fader the user set to 30 % should still be at 30 % after a restart
  * without them opening the app, so the service comes back if — and only if —
@@ -18,7 +18,11 @@ public final class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
+        String action = intent.getAction();
+        // An update kills the app the same way a reboot does: without this the
+        // API stays off until someone opens the app, and PhoneAPI loses it.
+        if (!Intent.ACTION_BOOT_COMPLETED.equals(action)
+                && !Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) return;
         MixerService.sync(context);
         ApiService.startIfEnabled(context);
     }

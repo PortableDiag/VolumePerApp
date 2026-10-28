@@ -2,6 +2,14 @@
 
 All notable changes to VolumePerApp.
 
+## [0.4.5] — 2026-10-27
+
+### Fixed
+
+- **The local API comes back after an update**, as it does after a reboot, if
+  it was switched on. It used to stay off until the app was opened, so PhoneAPI
+  lost it at every update. Adjusted faders are restored the same way.
+
 ## [0.4.4] — 2026-10-27
 
 ### Fixed
