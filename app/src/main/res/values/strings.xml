@@ -91,7 +91,7 @@
     <string name="phoneapi_body">PhoneAPI gets its own key, separate from yours, and passes it only to the agents you switch on there. It may do only what you switch on here.</string>
     <string name="phoneapi_turns_on">This switches the local API on.</string>
     <string name="phoneapi_replaces">PhoneAPI\'s old key stops working.</string>
-    <string name="phoneapi_may">It may</string>
+    <string name="phoneapi_may">It may:</string>
     <string name="phoneapi_see">See (every GET): the mixer, your apps\' faders, the streams and the settings</string>
     <string name="phoneapi_change">Change (everything else): move faders, mute, reset, set stream volumes and change settings</string>
     <string name="phoneapi_deny">Don\'t allow</string>

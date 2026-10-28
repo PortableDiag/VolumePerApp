@@ -2,6 +2,13 @@
 
 All notable changes to VolumePerApp.
 
+## [0.4.3] — 2026-10-27
+
+### Changed
+
+- **PhoneAPI's key screen** reads "It may:" in sentence case, and when PhoneAPI
+  already holds a key its See and Change switches start where that key is.
+
 ## [0.4.2] — 2026-10-27
 
 ### Added

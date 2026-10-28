@@ -35,6 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/phoneapi_may"
+                android:textAllCaps="false"
                 android:textAppearance="@style/TextAppearance.VolumePerApp.Section" />
 
             <com.google.android.material.materialswitch.MaterialSwitch

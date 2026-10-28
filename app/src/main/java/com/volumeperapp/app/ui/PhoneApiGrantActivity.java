@@ -50,7 +50,8 @@ public final class PhoneApiGrantActivity extends AppCompatActivity {
         if (!ApiPrefs.enabled(this)) {
             body.append(' ').append(getString(R.string.phoneapi_turns_on));
         }
-        if (PhoneApiAccess.grant(this) != null) {
+        PhoneApi.Grant current = PhoneApiAccess.grant(this);
+        if (current != null) {
             body.append(' ').append(getString(R.string.phoneapi_replaces));
         }
         ((TextView) findViewById(R.id.body)).setText(body);
@@ -58,7 +59,13 @@ public final class PhoneApiGrantActivity extends AppCompatActivity {
         MaterialSwitch see = findViewById(R.id.see);
         MaterialSwitch change = findViewById(R.id.change);
         MaterialButton allow = findViewById(R.id.allow);
-        // Everything starts off, and a key that may do nothing is not worth minting.
+        // A second handshake starts from what the current key may do; a first one, from nothing.
+        if (current != null) {
+            see.setChecked(current.see);
+            change.setChecked(current.change);
+            allow.setEnabled(current.see || current.change);
+        }
+        // A key that may do nothing is not worth minting.
         Runnable sync = () -> allow.setEnabled(see.isChecked() || change.isChecked());
         see.setOnCheckedChangeListener((b, on) -> sync.run());
         change.setOnCheckedChangeListener((b, on) -> sync.run());
