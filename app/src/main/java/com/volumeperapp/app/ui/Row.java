@@ -14,6 +14,7 @@ public abstract class Row {
     public static final int TYPE_CHANNEL = 2;
     public static final int TYPE_STREAM = 3;
     public static final int TYPE_EMPTY = 4;
+    public static final int TYPE_BOOST = 5;
 
     public abstract int type();
 
@@ -66,6 +67,21 @@ public abstract class Row {
 
         @Override public int type() { return TYPE_CHANNEL; }
         @Override public long id() { return ("c:" + app.packageName).hashCode(); }
+    }
+
+    /** The overall boost: one fader over everything. */
+    public static final class Boost extends Row {
+        public final int percent;
+        /** Why the boost is set and not in effect, or null. */
+        public final String problem;
+
+        public Boost(int percent, String problem) {
+            this.percent = percent;
+            this.problem = problem;
+        }
+
+        @Override public int type() { return TYPE_BOOST; }
+        @Override public long id() { return 3; }
     }
 
     public static final class Stream extends Row {

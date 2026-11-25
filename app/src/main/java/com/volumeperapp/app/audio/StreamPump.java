@@ -28,6 +28,10 @@ import android.util.Log;
  * idle routed app costs a blocked reader and a stopped track and disturbs
  * nothing.
  *
+ * <p>The one exception is {@link #setLowLatency}: turning the overall boost on
+ * or off swaps the output track, once. The capture, whose churn is what hurts
+ * other apps, stays open throughout.
+ *
  * <p>Above 1.0 this is a real amplifier and it will clip. Samples are summed in
  * int and clamped to short range, so overdrive distorts rather than wrapping
  * around into noise, which is the difference between "too loud" and "broken".
@@ -51,10 +55,13 @@ final class StreamPump implements Runnable {
 
     private final int uid;
     private final AudioRecord in;
-    private final AudioTrack out;
+    /** Swapped only by the pump thread; released by {@link #stop} after it ends. */
+    private volatile AudioTrack out;
     private final Thread thread;
 
     private volatile float gain;
+    private final boolean openedLowLatency;
+    private volatile boolean lowLatency;
     private volatile boolean running = true;
     private volatile long framesCarried;
 
@@ -73,11 +80,14 @@ final class StreamPump implements Runnable {
     private volatile int windowPeakOut;
     private long windowFrames;
 
-    private StreamPump(int uid, AudioRecord in, AudioTrack out, float gain) {
+    private StreamPump(int uid, AudioRecord in, AudioTrack out, float gain,
+                       boolean lowLatency) {
         this.uid = uid;
         this.in = in;
         this.out = out;
         this.gain = gain;
+        this.openedLowLatency = lowLatency;
+        this.lowLatency = lowLatency;
         this.thread = new Thread(this, "vpa-pump-" + uid);
         this.thread.setPriority(Thread.MAX_PRIORITY);
     }
@@ -106,7 +116,7 @@ final class StreamPump implements Runnable {
      * @return a started pump, or null if either endpoint refused to initialise
      *         (which happens when the mix was detached underneath us)
      */
-    static StreamPump start(int uid, AudioRecord in, float gain) {
+    static StreamPump start(int uid, AudioRecord in, float gain, boolean lowLatency) {
         if (in == null) return null;
         if (in.getState() != AudioRecord.STATE_INITIALIZED) {
             Log.w(TAG, "record sink for uid " + uid + " not initialised");
@@ -114,6 +124,18 @@ final class StreamPump implements Runnable {
             return null;
         }
 
+        AudioTrack out = openOutput(uid, lowLatency);
+        if (out == null) {
+            in.release();
+            return null;
+        }
+
+        StreamPump pump = new StreamPump(uid, in, out, gain, lowLatency);
+        pump.thread.start();
+        return pump;
+    }
+
+    private static AudioTrack openOutput(int uid, boolean lowLatency) {
         int channelMask = AudioFormat.CHANNEL_OUT_STEREO;
         int bytesPerFrame = 2 /* PCM16 */ * AudioPolicyBridge.CHANNELS;
         int minOut = AudioTrack.getMinBufferSize(
@@ -132,28 +154,34 @@ final class StreamPump implements Runnable {
                             .build())
                     .setBufferSizeInBytes(bufferBytes)
                     .setTransferMode(AudioTrack.MODE_STREAM)
-                    .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
+                    .setPerformanceMode(lowLatency ? AudioTrack.PERFORMANCE_MODE_LOW_LATENCY
+                            : AudioTrack.PERFORMANCE_MODE_NONE)
                     .build();
         } catch (Throwable t) {
             Log.w(TAG, "could not open output track for uid " + uid, t);
-            in.release();
             return null;
         }
 
         if (out.getState() != AudioTrack.STATE_INITIALIZED) {
             Log.w(TAG, "output track for uid " + uid + " not initialised");
             out.release();
-            in.release();
             return null;
         }
-
-        StreamPump pump = new StreamPump(uid, in, out, gain);
-        pump.thread.start();
-        return pump;
+        return out;
     }
 
     void setGain(float g) {
         this.gain = g;
+    }
+
+    /**
+     * Which output this app is re-rendered on. Low latency is the default; while
+     * the overall boost is on it must be off, because a low-latency track is
+     * mixed on a path the global effect never sees. On the ordinary path it sits
+     * beside every other media app and is boosted with them, once.
+     */
+    void setLowLatency(boolean wanted) {
+        this.lowLatency = wanted;
     }
 
     long framesCarried() {
@@ -221,6 +249,7 @@ final class StreamPump implements Runnable {
         // silent costs an idle track rather than an active output.
         boolean parked = true;
         long silentFrames = 0;
+        boolean outIsLowLatency = openedLowLatency;
 
         while (running) {
             int n;
@@ -246,6 +275,24 @@ final class StreamPump implements Runnable {
                     break;
                 }
                 continue;
+            }
+
+            boolean want = lowLatency;
+            if (want != outIsLowLatency) {
+                outIsLowLatency = want;      // even on failure: try once, keep the old track
+                AudioTrack next = openOutput(uid, want);
+                if (next != null) {
+                    AudioTrack old = out;
+                    try {
+                        if (!parked) next.play();
+                        out = next;
+                        old.pause();
+                        old.flush();
+                    } catch (Throwable t) {
+                        Log.w(TAG, "could not switch output for uid " + uid, t);
+                    }
+                    (out == next ? old : next).release();
+                }
             }
 
             float g = gain;

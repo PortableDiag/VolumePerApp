@@ -17,6 +17,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.slider.Slider;
 import com.volumeperapp.app.R;
+import com.volumeperapp.app.audio.Booster;
 import com.volumeperapp.app.data.AppEntry;
 import com.volumeperapp.app.data.VolumeStore;
 
@@ -38,6 +39,10 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         void onReset(AppEntry app);
 
         void onStreamChanged(int streamType, int volume);
+
+        void onBoostChanged(int percent);
+
+        void onBoostReset();
 
         void onBannerAction();
     }
@@ -123,6 +128,8 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 return new SectionVH(inf.inflate(R.layout.item_section, parent, false));
             case Row.TYPE_STREAM:
                 return new StreamVH(inf.inflate(R.layout.item_stream, parent, false));
+            case Row.TYPE_BOOST:
+                return new BoostVH(inf.inflate(R.layout.item_boost, parent, false));
             case Row.TYPE_EMPTY:
                 return new EmptyVH(inf.inflate(R.layout.item_empty, parent, false));
             default:
@@ -137,6 +144,7 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         else if (holder instanceof SectionVH) ((SectionVH) holder).bind((Row.Section) row);
         else if (holder instanceof ChannelVH) ((ChannelVH) holder).bind((Row.Channel) row);
         else if (holder instanceof StreamVH) ((StreamVH) holder).bind((Row.Stream) row);
+        else if (holder instanceof BoostVH) ((BoostVH) holder).bind((Row.Boost) row);
     }
 
     // ------------------------------------------------------------------ banner
@@ -341,6 +349,88 @@ public final class MixerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             reset.setOnClickListener(v -> callbacks.onReset(app));
             mute.setOnClickListener(v -> callbacks.onMuteToggled(app));
             remove.setOnClickListener(v -> callbacks.onRemove(app));
+        }
+    }
+
+    // ------------------------------------------------------------------- boost
+
+    final class BoostVH extends RecyclerView.ViewHolder {
+        final TextView note;
+        final TextView readout;
+        final ImageButton reset;
+        final Slider fader;
+        boolean binding;
+
+        /**
+         * Where this drag began. A field, not the listener's: leaving 100 %
+         * starts the engine, which rebinds the row in the middle of the drag.
+         */
+        int start;
+
+        BoostVH(View v) {
+            super(v);
+            note = v.findViewById(R.id.boost_note);
+            readout = v.findViewById(R.id.boost_readout);
+            reset = v.findViewById(R.id.boost_reset);
+            fader = v.findViewById(R.id.boost_fader);
+        }
+
+        void bind(Row.Boost b) {
+            binding = true;
+            fader.setValueTo(VolumeStore.MAX_BOOST_PERCENT);
+            fader.setValue(Math.max(VolumeStore.DEFAULT_PERCENT,
+                    Math.min(VolumeStore.MAX_BOOST_PERCENT, b.percent)));
+            show(b.percent, b.problem);
+            binding = false;
+
+            fader.clearOnChangeListeners();
+            fader.addOnChangeListener((slider, value, fromUser) -> {
+                if (binding || !fromUser) return;
+                int pct = Math.round(value);
+                show(pct, null);
+                callbacks.onBoostChanged(pct);
+            });
+
+            // The same detents and the same nudge override as the app faders.
+            fader.clearOnSliderTouchListeners();
+            fader.addOnSliderTouchListener(new Slider.OnSliderTouchListener() {
+                @Override public void onStartTrackingTouch(@NonNull Slider slider) {
+                    start = Math.round(slider.getValue());
+                }
+
+                @Override public void onStopTrackingTouch(@NonNull Slider slider) {
+                    int pct = Math.round(slider.getValue());
+                    int detent = settle(pct, start);
+                    if (detent == pct) return;
+                    binding = true;
+                    slider.setValue(detent);
+                    binding = false;
+                    show(detent, null);
+                    callbacks.onBoostChanged(detent);
+                }
+            });
+
+            reset.setOnClickListener(v -> callbacks.onBoostReset());
+        }
+
+        private void show(int pct, String problem) {
+            boolean on = pct > VolumeStore.DEFAULT_PERCENT;
+            readout.setText(String.format(Locale.US, "%d%%", pct));
+            // Invisible, not gone: the row must not reflow under a moving finger.
+            reset.setVisibility(on ? View.VISIBLE : View.INVISIBLE);
+            if (on && problem != null) {
+                note.setText(context.getString(R.string.boost_failed, problem));
+                note.setTextColor(ContextCompat.getColor(context, R.color.state_bad));
+            } else {
+                note.setText(on
+                        ? context.getString(R.string.boost_on, Booster.decibelText(pct))
+                        : context.getString(R.string.boost_off));
+                note.setTextColor(themeColor(
+                        com.google.android.material.R.attr.colorOnSurfaceVariant));
+            }
+            fader.setTrackActiveTintList(ColorStateList.valueOf(on
+                    ? ContextCompat.getColor(context, R.color.boost)
+                    : themeColor(com.google.android.material.R.attr.colorPrimary)));
         }
     }
 

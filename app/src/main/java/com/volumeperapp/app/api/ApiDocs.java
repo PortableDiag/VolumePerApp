@@ -28,6 +28,8 @@ public final class ApiDocs {
             "POST   /api/apps/{package}/reset",
             "POST   /api/reset",
             "GET    /api/installed?q=",
+            "GET    /api/boost",
+            "PATCH  /api/boost",
             "GET    /api/streams",
             "PATCH  /api/streams/{media|ring|alarm|notification|system}",
             "GET    /api/settings",
@@ -74,7 +76,7 @@ this device is in, and `GET /api/diagnostics` says why.
 `GET /api/docs` — this reference. `GET /api` — the one-line list of every route.
 
 `GET /api/instance` — version, Android level, and the engine:
-`mode` is `privileged` (faders are real), `idle` (nothing adjusted, engine off by design) or
+`mode` is `privileged` (faders are real), `idle` (no app adjusted; by design nothing is routed) or
 `limited` (the routing permission is not granted; per-app faders are inert, system streams
 still work). Also `engine_running`, `routed` (how many apps are diverted right now),
 `playback_detection` (whether the notification-listener grant that lets the app see what is
@@ -82,8 +84,8 @@ playing is on — granting it needs a person, in system settings).
 
 ## The mixer
 
-`GET /api/mixer` — what the screen shows: `mode`, then `apps` (playing ones first), then
-`streams`.
+`GET /api/mixer` — what the screen shows: `mode`, `boost`, then `apps` (playing ones first),
+then `streams`.
 
 An **app** is:
 
@@ -115,10 +117,24 @@ opened. Once any app is adjusted the engine is running, and later changes apply 
 
 `DELETE /api/apps/{package}` — off the mixer, and its setting forgotten (the strip's X).
 
-`POST /api/reset` — every fader back to 100 % and unmuted.
+`POST /api/reset` — every fader back to 100 % and unmuted, and the overall boost off.
 
 `GET /api/installed?q=spot` — the app picker: installed apps that can make a sound, by label,
 with package and uid. `q` filters on label or package; without it, all of them.
+
+## Overall boost
+
+`GET /api/boost` —
+`{"gain": 200, "db": 6.0, "max": 400, "supported": true, "active": true}`.
+
+One gain over everything that is playing, 100 % (off) to 400 % (+12 dB), as a platform effect on
+the global output mix. It diverts nothing, so it works in **limited** mode and on apps that block
+capture. `active` is whether the platform has it enabled now; when it is set and not active,
+`error` says why.
+
+`PATCH /api/boost` — `{"gain": 150}`; 100 turns it off. Answers `engine` as a fader does. A
+limiter holds the peaks, but sound driven hard into it distorts, and it raises headphones too:
+do not raise it for someone without saying so. Games and other low-latency audio may bypass it.
 
 ## System streams
 

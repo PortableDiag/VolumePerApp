@@ -49,6 +49,7 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
     private final AppRepository apps;
     private final AudioPolicyBridge bridge;
     private final PlaybackWatcher watcher;
+    private final Booster booster = new Booster();
 
     /** uid -> package, for every routed app. */
     private final Map<Integer, String> routed = new LinkedHashMap<>();
@@ -105,6 +106,10 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
         return watcher;
     }
 
+    public Booster booster() {
+        return booster;
+    }
+
     public synchronized Set<Integer> routedUids() {
         return new HashSet<>(routed.keySet());
     }
@@ -150,6 +155,8 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
         if (running) return;
         running = true;
         reconcileWatcher();
+        // Before the pumps open, so they are opened on the right output once.
+        booster.apply(store.boostPercent());
         syncRouting();
         Log.i(TAG, "engine started; privileged=" + privileged);
         notifyState();
@@ -164,6 +171,7 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
         pumpGeneration.clear();
         routed.clear();
         bridge.shutdown();
+        booster.release();
         privileged = false;
         status = "stopped";
         Log.i(TAG, "engine stopped");
@@ -176,6 +184,8 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
      */
     public synchronized void syncRouting() {
         if (!running) return;
+        // Reset-all changes the boost and the faders in one write.
+        applyBoost();
 
         Map<Integer, String> wanted = new LinkedHashMap<>();
         for (String pkg : store.adjustedPackages()) {
@@ -206,11 +216,12 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
 
         privileged = bridge.isRegistered();
         if (wanted.isEmpty()) {
-            status = "idle — no app is adjusted";
+            status = boostStatus("idle — no app is adjusted");
         } else if (privileged) {
-            status = "routing " + routed.size() + " of " + wanted.size() + " adjusted app(s)";
+            status = withBoost("routing " + routed.size() + " of " + wanted.size()
+                    + " adjusted app(s)");
         } else {
-            status = "limited — " + friendlyError(bridge.lastError());
+            status = withBoost("limited — " + friendlyError(bridge.lastError()));
         }
 
         // Attaching or detaching a mix can invalidate existing record sinks. The
@@ -220,6 +231,38 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
         // went quietly silent. The generation stamp is what makes the claim true.
         reconcilePumps();
         notifyState();
+    }
+
+    /** The overall boost was moved. */
+    public synchronized void onBoostChanged() {
+        if (!running) return;
+        boolean was = booster.isActive();
+        applyBoost();
+        // One notification per change of state, not one per step of a drag:
+        // each one rebuilds the mixer under the finger.
+        if (booster.isActive() != was || !booster.isActive()) syncRouting();
+    }
+
+    private void applyBoost() {
+        booster.apply(store.boostPercent());
+        syncPumpOutputs();
+    }
+
+    /** See {@link StreamPump#setLowLatency}: a fast track would escape the boost. */
+    private void syncPumpOutputs() {
+        boolean lowLatency = !booster.isActive();
+        for (StreamPump p : pumps.values()) p.setLowLatency(lowLatency);
+    }
+
+    private String boostStatus(String unboosted) {
+        if (!store.isBoosted()) return unboosted;
+        return booster.isActive()
+                ? "everything boosted"
+                : "boost is not working — " + booster.lastError();
+    }
+
+    private String withBoost(String routing) {
+        return store.isBoosted() ? routing + ", " + boostStatus("") : routing;
     }
 
     private String friendlyError(String raw) {
@@ -254,6 +297,10 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
             // Who is playing no longer decides which pumps exist. This is only a
             // retry point for one that failed to open, and the UI refresh below.
             reconcilePumps();
+            // The boost needs the same second look: audioserver restarting, or
+            // another app taking the effect, leaves ours dead without a word.
+            booster.check();
+            syncPumpOutputs();
         }
         notifyState();
     }
@@ -299,7 +346,8 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
             String pkg = routed.get(uid);
             AudioRecord sink = bridge.sinkFor(uid);
             if (sink == null) continue;
-            StreamPump pump = StreamPump.start(uid, sink, store.effectiveGain(pkg));
+            StreamPump pump = StreamPump.start(uid, sink, store.effectiveGain(pkg),
+                    !booster.isActive());
             if (pump != null) {
                 pumps.put(uid, pump);
                 pumpGeneration.put(uid, gen);
@@ -357,6 +405,7 @@ public final class RoutingEngine implements PlaybackWatcher.Listener {
         if (bridge.lastError() != null) {
             sb.append("last policy error: ").append(bridge.lastError()).append('\n');
         }
+        sb.append("\n== OVERALL BOOST ==\n").append(booster.report());
         return sb.toString();
     }
 

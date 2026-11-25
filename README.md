@@ -67,6 +67,36 @@ stays at 32.
 Apps currently making sound are pinned to the top under **Playing now**, whether
 or not you have added them.
 
+### Volume boost
+
+The fader at the top raises **everything that is playing**, from 100 % (off) to
+400 % (+12 dB), on top of whatever the per-app faders do. It needs Android 9 and
+no root: it is a `DynamicsProcessing` effect on the global output mix, so it
+diverts nothing, works in Limited mode, and reaches apps that block capture. At
+100 % the effect does not exist.
+
+Measured at the speaker output on Android 15 / API 35, with the tone fixture
+(0.5 full scale, -9.0 dBFS):
+
+| App fader | Boost | Output | Expected |
+|---:|---:|---:|---:|
+| 100 % | 100 % | -9.0 dBFS | -9.0 |
+| 100 % | 150 % | -5.5 | -5.5 |
+| 100 % | 200 % | -3.0 | -3.0 |
+| 50 % | 100 % | -15.1 | -15.0 |
+| 50 % | 150 % | -11.5 | -11.5 |
+| 50 % | 200 % | -9.0 | -9.0 |
+| 50 % | 400 % | -3.0 | -3.0 |
+
+A limiter stops a full-scale tone from being driven past full scale. It works on
+level, not on peaks, so loud music pushed hard still distorts. `LoudnessEnhancer`
+is the usual class for this and was rejected on measurement: its "+3 dB" came out
+at -9.6, quieter than no effect.
+
+The boost is on the output media uses. Games and other low-latency audio may
+bypass it, and so may calls. It raises headphones too; sustained high volume
+causes permanent hearing loss.
+
 ### Themes
 
 The palette button in the toolbar offers all seventeen house palettes: Material
@@ -99,6 +129,7 @@ curl -s -H "X-API-Key: $KEY" -X PATCH 127.0.0.1:8798/api/settings -d '{"palette"
 | | |
 |---|---|
 | **Faders** | every app's gain and mute, add to and remove from the mixer, reset one or all, and the app picker's list |
+| **Boost** | the overall volume boost |
 | **Streams** | media, ring, alarm, notification and system volume |
 | **Settings** | theme, fader ceiling, and the volume-warning suppression (still applied at the next boot) |
 | **Status** | mode (privileged / idle / limited), what is routed, and the full Diagnostics report |
@@ -192,6 +223,9 @@ no notifications; the permission is the only way to reach that call.
                      AudioTrack (VolumePerApp's own uid) ──▶ speaker
 ```
 
+- **The overall boost is not routing.** It is one effect on the global output mix.
+  While it is on, `StreamPump` gives up its low-latency output, because a fast
+  track is mixed where that effect never sees it.
 - **`ROUTE_FLAG_LOOP_BACK` only**, never `ROUTE_FLAG_LOOP_BACK_RENDER`. Adding
   RENDER would send the *untouched* stream straight to a device as well, which
   is the opposite of attenuating it.
@@ -211,7 +245,8 @@ no notifications; the permission is the only way to reach that call.
 - Adding or removing an app uses `AudioPolicy.attachMixes` / `detachMixes` where
   the build has them (API 35 does), so one app's fader does not interrupt
   another's audio. Older builds fall back to rebuilding the policy.
-- Latency: one ~10 ms buffer. Irrelevant for music, noticeable in games.
+- Latency: one ~10 ms buffer, more while the boost is on. Irrelevant for music,
+  noticeable in games.
 
 ### Layout
 
@@ -223,6 +258,7 @@ app/src/main/java/com/volumeperapp/app/
     SafeVolume.java          the platform's hearing-safety nag, and the one
                              boot-time switch that turns it off
     AudioPolicyBridge.java   the only class that speaks AudioPolicy/AudioMix
+    Booster.java             the overall boost: one effect on the global output mix
     StreamPump.java          one diverted app: read, scale, write, meter
     RoutingEngine.java       decides *when* to divert; owns the routed/pumping sets
     PlaybackWatcher.java     who is playing, from two sources that each miss things

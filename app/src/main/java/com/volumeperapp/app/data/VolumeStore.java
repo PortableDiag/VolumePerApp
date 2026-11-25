@@ -27,9 +27,13 @@ public final class VolumeStore {
     public static final String KEY_THEME = "theme";
     private static final String KEY_ENGINE = "engine_enabled";
     private static final String KEY_MAX = "max_gain_percent";
+    private static final String KEY_BOOST = "boost_percent";
 
     /** 100 % means "leave it alone" and is the one value that is never routed. */
     public static final int DEFAULT_PERCENT = 100;
+
+    /** Top of the overall boost. 400 % is +12 dB. */
+    public static final int MAX_BOOST_PERCENT = 400;
 
     private final SharedPreferences prefs;
 
@@ -135,7 +139,29 @@ public final class VolumeStore {
         for (String k : prefs.getAll().keySet()) {
             if (k.startsWith(KEY_GAIN) || k.startsWith(KEY_MUTED)) ed.remove(k);
         }
+        ed.remove(KEY_BOOST);
         ed.apply();
+    }
+
+    // ---- the overall boost -------------------------------------------------
+
+    /** Percent, 100 (off) to {@link #MAX_BOOST_PERCENT}. */
+    public int boostPercent() {
+        return prefs.getInt(KEY_BOOST, DEFAULT_PERCENT);
+    }
+
+    public void setBoostPercent(int percent) {
+        prefs.edit().putInt(KEY_BOOST,
+                Math.max(DEFAULT_PERCENT, Math.min(MAX_BOOST_PERCENT, percent))).apply();
+    }
+
+    public boolean isBoosted() {
+        return boostPercent() > DEFAULT_PERCENT;
+    }
+
+    /** Whether anything at all needs the engine: a fader, a mute or the boost. */
+    public boolean engineWanted() {
+        return engineEnabled() && (isBoosted() || !adjustedPackages().isEmpty());
     }
 
     // ---- app-wide settings -------------------------------------------------

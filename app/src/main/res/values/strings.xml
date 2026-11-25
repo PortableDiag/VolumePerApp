@@ -11,17 +11,25 @@
 
     <string name="section_playing">Playing now</string>
     <string name="section_mixer">Your mixer</string>
+    <string name="section_boost">Overall</string>
     <string name="section_streams">System streams</string>
 
     <string name="engine_active">Per-app volume active</string>
     <string name="engine_limited">Limited mode</string>
 
+    <string name="engine_boost">Volume boost active</string>
+
+    <string name="boost_name">Volume boost</string>
+    <string name="boost_off">Raises everything that is playing</string>
+    <string name="boost_on">%1$s. Loud sound can distort</string>
+    <string name="boost_failed">Not working: %1$s</string>
+
     <string name="banner_privileged_title">Privileged mode</string>
     <string name="banner_privileged_body">Audio is diverted per app, gain applied, and re-rendered. The faders below are real.</string>
     <string name="banner_limited_title">Limited mode — per-app faders are inert</string>
     <string name="banner_limited_body">MODIFY_AUDIO_ROUTING is not granted, so nothing can be diverted. Install the Magisk module to move this app into /system/priv-app. System streams below still work.</string>
-    <string name="banner_idle_title">Nothing is adjusted</string>
-    <string name="banner_idle_body" formatted="false">An app at 100 % is never routed, so it costs nothing. Move a fader and the engine starts.</string>
+    <string name="banner_idle_title">No app is adjusted</string>
+    <string name="banner_idle_body" formatted="false">An app at 100 % is never routed, so it costs nothing. Move its fader and routing starts.</string>
     <string name="banner_action">What is missing?</string>
 
     <string name="empty_mixer_title">No apps on the mixer yet</string>
@@ -56,7 +64,7 @@
     <string name="diag_refresh">Re-probe</string>
 
     <string name="session_access_prompt">VolumePerApp needs notification-listener access to see which app is playing. It reads no notifications — the permission is the only way to reach getActiveSessions().</string>
-    <string name="reset_done" formatted="false">Every fader is back to 100 %</string>
+    <string name="reset_done" formatted="false">Every fader and the boost are back to 100 %</string>
     <string name="max_gain">Fader ceiling</string>
 
     <string name="safe_volume">Suppress volume warning</string>

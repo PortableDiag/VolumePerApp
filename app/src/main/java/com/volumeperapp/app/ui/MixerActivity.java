@@ -19,6 +19,7 @@ import com.google.android.material.floatingactionbutton.ExtendedFloatingActionBu
 import com.volumeperapp.app.R;
 import com.volumeperapp.app.api.ApiService;
 import com.volumeperapp.app.api.ApiSettingsDialog;
+import com.volumeperapp.app.audio.Booster;
 import com.volumeperapp.app.audio.MixerService;
 import com.volumeperapp.app.audio.PlaybackWatcher;
 import com.volumeperapp.app.audio.RoutingEngine;
@@ -170,7 +171,10 @@ public final class MixerActivity extends AppCompatActivity
         // is idle by design, and dimming every fader then would say "this does
         // nothing" about controls that work perfectly well. It dims only once a
         // registration has actually been refused.
-        boolean live = !engine.isRunning() || engine.isPrivileged();
+        // With nothing adjusted the engine may be up for the boost alone, which
+        // registers no policy; that is not a refusal either.
+        boolean live = !engine.isRunning() || engine.isPrivileged()
+                || store.adjustedPackages().isEmpty();
         // Separate signal, deliberately: the banner may only claim privileged
         // mode once a policy has actually been accepted. "Not known to be
         // inert" (live) and "proven to work" (routingProven) are different
@@ -185,6 +189,11 @@ public final class MixerActivity extends AppCompatActivity
         Set<Integer> routedUids = engine.routedUids();
 
         rows.add(banner(routingProven, watcher));
+
+        if (Booster.supported()) {
+            rows.add(new Row.Section(getString(R.string.section_boost)));
+            rows.add(new Row.Boost(store.boostPercent(), boostProblem()));
+        }
 
         // Every app that deserves a strip: pinned, adjusted, or making noise.
         Map<String, AppEntry> strips = new LinkedHashMap<>();
@@ -240,6 +249,14 @@ public final class MixerActivity extends AppCompatActivity
         adapter.submit(rows);
     }
 
+    /** Only once the engine has tried: before that, "not active" is not a failure. */
+    private String boostProblem() {
+        if (!store.isBoosted() || !engine.isRunning()) return null;
+        Booster b = engine.booster();
+        if (b.isActive()) return null;
+        return b.lastError() == null ? "another app has taken the effect" : b.lastError();
+    }
+
     private Row.Banner banner(boolean live, PlaybackWatcher watcher) {
         if (live) {
             String body = getString(R.string.banner_privileged_body);
@@ -251,7 +268,7 @@ public final class MixerActivity extends AppCompatActivity
                     watcher.sessionAccessGranted() ? null
                             : getString(R.string.grant_session_access));
         }
-        if (store.adjustedPackages().isEmpty() && !engine.isRunning()) {
+        if (store.adjustedPackages().isEmpty()) {
             return new Row.Banner(Row.Banner.Level.INFO,
                     getString(R.string.banner_idle_title),
                     getString(R.string.banner_idle_body), null);
@@ -328,6 +345,24 @@ public final class MixerActivity extends AppCompatActivity
             Toast.makeText(this, "That stream is locked by Do Not Disturb policy",
                     Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void onBoostChanged(int percent) {
+        draggingWrite = true;       // as in onGainChanged
+        try {
+            store.setBoostPercent(percent);
+        } finally {
+            draggingWrite = false;
+        }
+        MixerService.pushBoost(this);
+    }
+
+    @Override
+    public void onBoostReset() {
+        store.setBoostPercent(VolumeStore.DEFAULT_PERCENT);
+        MixerService.pushBoost(this);
+        rebuild();
     }
 
     @Override

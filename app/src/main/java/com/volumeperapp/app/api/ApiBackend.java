@@ -44,11 +44,21 @@ public interface ApiBackend {
     /** Back to 100 % and unmuted, as the strip's reset button. */
     boolean reset(String pkg);
 
+    /** Every fader, and the boost, back to 100 %. */
     void resetAll();
 
     int maxGain();
 
     void setMaxGain(int percent);
+
+    /** The overall boost: what is set, and whether the platform has it. */
+    JSONObject boost() throws Exception;
+
+    /** False on Android 8, where the effect does not exist. */
+    boolean boostSupported();
+
+    /** @return as {@link #setGain} */
+    boolean setBoost(int percent);
 
     JSONArray streams() throws Exception;
 

@@ -106,6 +106,35 @@ public final class ApiRouterTest {
     }
 
     @Test
+    public void boostIsRangeCheckedAndResetAllTurnsItOff() throws Exception {
+        assertEquals(100, json(call("GET", "/api/boost", null)).getInt("gain"));
+        Http.Response r = call("PATCH", "/api/boost", "{\"gain\": 250}");
+        assertEquals(200, r.status);
+        assertEquals("applied", json(r).getString("engine"));
+        assertEquals(250, json(r).getJSONObject("boost").getInt("gain"));
+        for (String bad : new String[]{"{\"gain\": 99}", "{\"gain\": 401}",
+                "{\"gain\": 4294967496}", "{\"gain\": 150.5}", "{\"gain\": \"200\"}", "{}"}) {
+            assertEquals(bad, 400, call("PATCH", "/api/boost", bad).status);
+        }
+        assertEquals(250, backend.boost);
+        assertEquals(405, call("POST", "/api/boost", null).status);
+        assertEquals(404, call("GET", "/api/boost/x", null).status);
+
+        assertEquals(200, call("POST", "/api/reset", null).status);
+        assertEquals(100, backend.boost);
+
+        backend.boostSupported = false;
+        assertEquals(409, call("PATCH", "/api/boost", "{\"gain\": 200}").status);
+        assertEquals(100, backend.boost);
+    }
+
+    @Test
+    public void boostRangeIsTheStores() {
+        assertEquals(com.volumeperapp.app.data.VolumeStore.DEFAULT_PERCENT, ApiRouter.BOOST_MIN);
+        assertEquals(com.volumeperapp.app.data.VolumeStore.MAX_BOOST_PERCENT, ApiRouter.BOOST_MAX);
+    }
+
+    @Test
     public void streams() throws Exception {
         assertEquals(200, call("PATCH", "/api/streams/media", "{\"volume\": 9}").status);
         assertEquals(9, (int) backend.streams.get("media"));
@@ -155,7 +184,8 @@ public final class ApiRouterTest {
                     .replaceAll("\\?.*", "");
             String body = parts[0].equals("PATCH")
                     ? (path.contains("streams") ? "{\"volume\": 3}"
-                    : path.contains("settings") ? "{\"max_gain\": 100}" : "{\"gain\": 50}")
+                    : path.contains("settings") ? "{\"max_gain\": 100}"
+                    : path.contains("boost") ? "{\"gain\": 150}" : "{\"gain\": 50}")
                     : null;
             Http.Response r = call(parts[0], path, body);
             assertNotEquals(line + " -> " + r.text(), 404, r.status);

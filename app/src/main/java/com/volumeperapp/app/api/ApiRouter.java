@@ -39,6 +39,10 @@ public final class ApiRouter {
     public static final List<Integer> CEILINGS = Collections.unmodifiableList(
             Arrays.asList(100, 150, 200, 400));
 
+    /** The overall boost's range; BOOST_MAX is VolumeStore.MAX_BOOST_PERCENT. */
+    public static final int BOOST_MIN = 100;
+    public static final int BOOST_MAX = 400;
+
     private final ApiBackend backend;
     private final Supplier<String> expectedKey;
     private final Supplier<PhoneApi.Grant> phoneApi;
@@ -161,6 +165,9 @@ public final class ApiRouter {
                     backend.resetAll();
                     return ok();
                 });
+            case "boost":
+                if (!rest.isEmpty()) return noRoute(r);
+                return boost(r);
             case "streams":
                 return streams(r, rest);
             case "settings":
@@ -284,6 +291,31 @@ public final class ApiRouter {
      */
     private static String engine(boolean applied) {
         return applied ? "applied" : "deferred";
+    }
+
+    // -------------------------------------------------------------------- boost
+
+    private Http.Response boost(Http.Request r) throws Exception {
+        if ("GET".equals(r.method)) return Http.Response.json(backend.boost());
+        if (!"PATCH".equals(r.method) && !"PUT".equals(r.method)) {
+            return methodNotAllowed(r, "GET", "PATCH", "PUT");
+        }
+        Object raw = r.json().opt("gain");
+        if (!(raw instanceof Number) || ((Number) raw).doubleValue() % 1 != 0) {
+            throw new ApiException(400, "gain must be a whole percent",
+                    BOOST_MIN + " (off) to " + BOOST_MAX);
+        }
+        double gain = ((Number) raw).doubleValue();
+        if (gain < BOOST_MIN || gain > BOOST_MAX) {
+            throw new ApiException(400, "boost " + raw + " is outside "
+                    + BOOST_MIN + "–" + BOOST_MAX,
+                    "it only raises; to turn everything down use PATCH /api/streams/media");
+        }
+        if (!backend.boostSupported()) {
+            throw new ApiException(409, "the overall boost needs Android 9 or newer", null);
+        }
+        boolean applied = backend.setBoost((int) gain);
+        return ok("engine", engine(applied), "boost", backend.boost());
     }
 
     // ------------------------------------------------------------------ streams

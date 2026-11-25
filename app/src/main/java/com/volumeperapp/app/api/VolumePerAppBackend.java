@@ -5,6 +5,7 @@ import android.media.AudioManager;
 import android.os.Build;
 
 import com.volumeperapp.app.BuildConfig;
+import com.volumeperapp.app.audio.Booster;
 import com.volumeperapp.app.audio.MixerService;
 import com.volumeperapp.app.audio.PlaybackWatcher;
 import com.volumeperapp.app.audio.RoutingEngine;
@@ -81,7 +82,7 @@ final class VolumePerAppBackend implements ApiBackend {
     /** The banner's three states, decided exactly as the banner decides them. */
     private String mode(RoutingEngine eng) {
         if (eng.isRunning() && eng.isPrivileged()) return "privileged";
-        if (store.adjustedPackages().isEmpty() && !eng.isRunning()) return "idle";
+        if (store.adjustedPackages().isEmpty()) return "idle";
         return "limited";
     }
 
@@ -125,6 +126,7 @@ final class VolumePerAppBackend implements ApiBackend {
         return new JSONObject()
                 .put("mode", mode(eng))
                 .put("max_gain", store.maxGainPercent())
+                .put("boost", boost())
                 .put("apps", strips)
                 .put("streams", streams());
     }
@@ -226,6 +228,33 @@ final class VolumePerAppBackend implements ApiBackend {
     @Override
     public void setMaxGain(int percent) {
         store.setMaxGainPercent(percent);
+    }
+
+    // ------------------------------------------------------------------- boost
+
+    @Override
+    public JSONObject boost() throws Exception {
+        int percent = store.boostPercent();
+        Booster b = engine().booster();
+        JSONObject j = new JSONObject()
+                .put("gain", percent)
+                .put("db", Math.round(Booster.decibels(percent) * 10) / 10.0)
+                .put("max", VolumeStore.MAX_BOOST_PERCENT)
+                .put("supported", Booster.supported())
+                .put("active", b.isActive());
+        if (b.lastError() != null) j.put("error", b.lastError());
+        return j;
+    }
+
+    @Override
+    public boolean boostSupported() {
+        return Booster.supported();
+    }
+
+    @Override
+    public boolean setBoost(int percent) {
+        store.setBoostPercent(percent);
+        return MixerService.pushBoost(context);
     }
 
     // ----------------------------------------------------------------- streams

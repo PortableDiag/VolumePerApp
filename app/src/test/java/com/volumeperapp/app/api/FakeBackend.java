@@ -18,6 +18,8 @@ final class FakeBackend implements ApiBackend {
     final Set<String> pinned = new LinkedHashSet<>();
     final Map<String, Integer> streams = new HashMap<>();
     int maxGain = 150;
+    int boost = 100;
+    boolean boostSupported = true;
     String palette = "Ocean";
     boolean suppress;
     boolean engineApplies = true;
@@ -92,6 +94,7 @@ final class FakeBackend implements ApiBackend {
     public void resetAll() {
         gain.clear();
         muted.clear();
+        boost = 100;
     }
 
     @Override
@@ -102,6 +105,22 @@ final class FakeBackend implements ApiBackend {
     @Override
     public void setMaxGain(int percent) {
         maxGain = percent;
+    }
+
+    @Override
+    public JSONObject boost() throws Exception {
+        return new JSONObject().put("gain", boost);
+    }
+
+    @Override
+    public boolean boostSupported() {
+        return boostSupported;
+    }
+
+    @Override
+    public boolean setBoost(int percent) {
+        boost = percent;
+        return engineApplies;
     }
 
     @Override

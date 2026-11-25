@@ -2,6 +2,43 @@
 
 All notable changes to VolumePerApp.
 
+## [0.5.0] — 2026-11-25
+
+### Added
+
+- **Volume boost**: one fader over everything that is playing, 100 % to 400 %
+  (+12 dB), at the top of the mixer. It is an effect on the platform's global
+  output mix, so it diverts nothing, adds no routing, needs no privilege, and
+  works in Limited mode and on apps that block capture. A limiter holds a
+  full-scale tone at full scale; music driven hard into it still distorts. It
+  has the faders' detents and a reset, comes back after a reboot, and is turned
+  off by *Reset every fader*. Needs Android 9.
+- **The local API has it too**: `GET` and `PATCH /api/boost`, and `boost` in
+  `GET /api/mixer`.
+- **Diagnostics** reports the boost and the gain the platform is holding.
+
+### Changed
+
+- While the boost is on, a routed app is re-rendered on the ordinary media path
+  instead of the low-latency one, so that it is boosted with everything else.
+  Its output track is swapped once when the boost goes on or off; the capture
+  is not touched.
+- `GET /api/instance` reports `idle` whenever no app is adjusted, whether or not
+  the engine is up for the boost.
+
+### Fixed
+
+- **A crash at boot on Android 15 and newer.** With any fader adjusted, the
+  app crashed on every restart, the faders did not come back, and the local API
+  went down with it. Android 15 refuses a `mediaPlayback` service started at
+  boot; the app now falls back to a type that is allowed.
+
+### Not yet verified on hardware
+
+- Everything above was measured on the Android 15 emulator as a privileged
+  install. A phone with separate low-latency and deep-buffer outputs is where
+  the boost could behave differently, and that has not been tried.
+
 ## [0.4.5] — 2026-10-27
 
 ### Fixed
